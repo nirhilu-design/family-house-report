@@ -58,7 +58,7 @@ Sections are located by **title text**, not page numbers (`TITLES` in `js/extrac
 | USD returns | תשואות השקעות במט"ח | same | |
 | Std-dev | "גרף מדדי יעילות התיק ל-12 חודשים" under each returns table | vector markers (small filled circles) | axes fitted from tick labels; markers matched to managers by rank of 12M return |
 | Disclaimer | text starting "חשוב לציין" | until "בתודה / JP Group" | |
-| Liquidity | **not in PDF** | — | provisional defaults in `js/config.js`; user confirms; remembered per manager name in localStorage |
+| Liquidity | **not in PDF** | — | shared liquidity table (Cloudflare KV, `admin.html`); provisional defaults in `js/config.js` until confirmed; a manager missing from both is flagged and its choice is saved to the table |
 | Client name, notes, signer | **not in PDF** | — | manual |
 
 Not used: asset-class detail (מבנה תיק השקעות כולל), per-manager structure/geography/currency pages, monthly returns.

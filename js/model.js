@@ -103,7 +103,7 @@ export function runChecks(m, raw = null) {
   const badStd = m.managers.filter(x => x.stdDiff != null && x.stdDiff > 1.5);
   if (badStd.length) add('warn', `התאמת נקודה בגרף לא ודאית עבור: ${badStd.map(x => x.name).join(', ')}`);
   const noLiq = m.managers.filter(x => !x.liquidity);
-  if (noLiq.length) add('error', `חסר סיווג נזילות עבור: ${noLiq.map(x => x.name).join(', ')}`);
+  if (noLiq.length) add('error', `מנהלים שאינם בטבלת הנזילות – יש לבחור סוג נזילות: ${noLiq.map(x => x.name).join(', ')}`);
   const defLiq = m.managers.filter(x => x.liquiditySource === 'default');
   if (defLiq.length) add('warn', `סיווג נזילות זמני (ברירת מחדל, לאישור) עבור ${defLiq.length} מנהלים`);
   if (!m.meta.clientName) add('warn', 'לא הוזן שם לקוח');

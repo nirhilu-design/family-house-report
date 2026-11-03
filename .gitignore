@@ -7,3 +7,5 @@ node_modules/
 samples/
 exports/
 .DS_Store
+.dev.vars
+.wrangler/

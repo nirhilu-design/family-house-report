@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>טבלת נזילות מנהלים – Family House</title>
+  <link rel="icon" href="assets/logo-circle.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="app-bar">
+    <div class="brand">
+      <img src="assets/logo-circle.png" alt="" width="32" height="32">
+      <div>
+        <strong>טבלת נזילות מנהלים</strong>
+        <span id="mode">טוען…</span>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn ghost" href="./">חזרה למחולל הדוח</a>
+      <button class="btn ghost" id="export-csv">ייצוא CSV</button>
+    </div>
+  </header>
+
+  <main class="admin">
+    <p class="hint">הטבלה קובעת את סוג הנזילות של כל מנהל/ספק בכל הדוחות. נשמרים רק שם המנהל וסוג הנזילות – ללא נתוני לקוחות.
+      שורות "ברירת מחדל זמנית" הן סיווג התחלתי מהקוד שעוד לא אושר; אישור שורה שומר אותה בטבלה.</p>
+    <p id="msg" class="status" role="status"></p>
+
+    <section class="card">
+      <h2>הוספת מנהל / ספק</h2>
+      <form id="add" class="add-row">
+        <label class="field">שם המנהל כפי שמופיע בדוח JP Group<input id="add-name" required maxlength="120" placeholder="לדוגמה: אלטשולר ניהול תיקים"></label>
+        <label class="field">סוג נזילות<select id="add-liq" required></select></label>
+        <button class="btn primary" type="submit">הוספה לטבלה</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="toolbar">
+        <h2>מנהלים בטבלה <small id="count"></small></h2>
+        <div class="toolbar-actions">
+          <label class="field inline"><span class="sr">חיפוש</span><input id="q" type="search" placeholder="חיפוש מנהל…"></label>
+          <button class="btn" id="confirm-defaults">אישור כל ברירות המחדל</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table class="map admin-table">
+        <thead><tr><th>מנהל / ספק</th><th>סוג נזילות</th><th>סטטוס</th><th>עודכן</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table></div>
+    </section>
+  </main>
+  <script type="module" src="js/admin.js"></script>
+</body>
+</html>

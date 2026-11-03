@@ -4,15 +4,18 @@ import { extractReport } from './extract.js';
 import { buildModel, runChecks, fmt } from './model.js';
 import { renderReport } from './render.js';
 import { LIQUIDITY, CHANNELS } from './config.js';
+import { loadTable, saveEntry, asOverrides } from './store.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdfjs/pdf.worker.min.mjs', import.meta.url).href;
 
 const ASSETS = { logoFull: 'assets/logo-full.png', logoCircle: 'assets/logo-circle.png' };
-const STORE = 'fh.managerOverrides.v1'; // liquidity/channel choices per manager name (no client data)
+const STORE = 'fh.managerOverrides.v1'; // channel choices per manager name (no client data); liquidity lives in the shared table
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 let model = null;
 let sourceName = '';
+let table = { entries: {}, mode: 'local', canWrite: true };
+const tableReady = loadTable().then(t => { table = t; });
 
 function loadOverrides() { try { return JSON.parse(localStorage.getItem(STORE) || '{}'); } catch { return {}; } }
 function saveOverride(id, patch) {
@@ -28,7 +31,10 @@ async function handlePdf(file) {
     const data = new Uint8Array(await file.arrayBuffer());
     const doc = await pdfjs.getDocument({ data, isEvalSupported: false }).promise;
     const raw = await extractReport(doc, pdfjs.OPS);
-    model = buildModel(raw, loadOverrides());
+    await tableReady;
+    const local = loadOverrides(), shared = asOverrides(table), saved = {};
+    for (const k of new Set([...Object.keys(local), ...Object.keys(shared)])) saved[k] = { channel: local[k]?.channel, liquidity: shared[k]?.liquidity };
+    model = buildModel(raw, saved);
     sourceName = file.name;
     if (!model.managers.length) throw new Error('לא זוהתה טבלת מנהלי השקעות. ייתכן שזה לא דוח תקופתי של JP Group.');
     showWorkspace();
@@ -113,9 +119,10 @@ function renderMapping() {
       <tr><td>חשיפה למט״ח (₪)</td><td>${numInput('fx.value', m.fx?.value, 0)}</td><td>${src(m.fx?.page)}</td></tr>
     </tbody></table></div>
 
+    ${newManagersBox()}
     <h2>מנהלי השקעות <small>${src(m.managersPage)} משקלים · תשואות מעמודי התשואות · סטיית תקן מגרפי היעילות</small></h2>
     <div class="tbl-wrap"><table class="map wide"><thead><tr><th>#</th><th>מנהל</th><th>נזילות</th><th>ערוץ</th><th>משקל %</th><th>שווי ₪</th><th>מטבע</th><th>12 ח׳ %</th><th>24 ח׳ %</th><th>סט״ת %</th></tr></thead><tbody>${mgrRows}</tbody></table></div>
-    <p class="hint">שורות מסומנות = סיווג נזילות זמני (ברירת מחדל) או חסר. הנזילות לא מופיעה בדוח המקור; הבחירה נשמרת בדפדפן זה לפי שם המנהל ותופעל אוטומטית בדוחות הבאים. הערוץ נגזר מעמוד "מבנה תיק מנוהל – ניהול תיקים"${model.channelsPage ? ` ונבדק מול עמוד ${model.channelsPage}` : ''}.</p>
+    <p class="hint">שורות מסומנות = סיווג נזילות זמני (ברירת מחדל) או חסר. הנזילות לא מופיעה בדוח המקור; כל בחירה נשמרת ב<a href="admin.html" target="_blank">טבלת הנזילות</a>${table.mode === 'shared' ? ' המשותפת' : ' (מקומית בדפדפן זה)'} ותופעל אוטומטית בכל הדוחות הבאים. הערוץ נגזר מעמוד "מבנה תיק מנוהל – ניהול תיקים"${model.channelsPage ? ` ונבדק מול עמוד ${model.channelsPage}` : ''}.</p>
     <div class="row-actions"><button class="btn" id="confirm-liq">אישור כל סיווגי הנזילות כפי שהם</button></div>
 
     <h2>התפלגות לפי אפיק <small>${src(m.assetPage)}</small></h2>
@@ -131,10 +138,24 @@ function renderMapping() {
     <label class="field"><textarea data-path="disclaimer" rows="4">${esc(m.disclaimer)}</textarea></label>
   `;
   renderChecks();
-  $('#confirm-liq').addEventListener('click', () => {
-    for (const x of model.managers) if (x.liquidity) { x.liquiditySource = 'saved'; saveOverride(x.id, { liquidity: x.liquidity }); }
+  $('#confirm-liq').addEventListener('click', async () => {
+    for (const x of model.managers) {
+      if (!x.liquidity || x.liquiditySource === 'saved') continue;
+      try { await saveEntry(table, x.name, x.liquidity); x.liquiditySource = 'saved'; }
+      catch (e) { alert(`השמירה לטבלת הנזילות נכשלה: ${e.message}`); break; }
+    }
     refresh(true);
   });
+}
+
+function newManagersBox() {
+  const fresh = model.managers.map((x, i) => ({ x, i })).filter(({ x }) => x.liquiditySource === 'missing');
+  if (!fresh.length) return '';
+  const liqOpts = v => `<option value="" ${!v ? 'selected' : ''}>— לבחירה —</option>` + Object.entries(LIQUIDITY).map(([k, o]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${o.label}</option>`).join('');
+  return `<div class="new-mgrs" role="alert"><strong>${fresh.length === 1 ? 'נמצא מנהל/ספק שאינו בטבלת הנזילות' : `נמצאו ${fresh.length} מנהלים/ספקים שאינם בטבלת הנזילות`}</strong>
+    <span class="muted">בחירת סוג נזילות כאן מוסיפה אותם לטבלה${table.mode === 'shared' ? ' המשותפת' : ''} לכל הדוחות הבאים.</span>
+    ${fresh.map(({ x, i }) => `<div class="row"><span>${x.n}. ${esc(x.name)}</span><select data-path="managers.${i}.liquidity" aria-label="נזילות ${esc(x.name)}">${liqOpts(x.liquidity)}</select></div>`).join('')}
+  </div>`;
 }
 
 function setPath(obj, path, value) {
@@ -158,9 +179,15 @@ function onEdit(e) {
   const mm = path.match(/^managers\.(\d+)\.(liquidity|channel)$/);
   if (mm) {
     const x = model.managers[+mm[1]];
-    if (mm[2] === 'liquidity') x.liquiditySource = v ? 'saved' : 'missing';
-    saveOverride(x.id, { [mm[2]]: v });
-    el.closest('tr')?.classList.toggle('flag', x.liquiditySource !== 'saved');
+    if (mm[2] === 'channel') saveOverride(x.id, { channel: v });
+    else if (v) {
+      const wasNew = x.liquiditySource === 'missing';
+      saveEntry(table, x.name, v)
+        .then(() => { x.liquiditySource = 'saved'; refresh(wasNew); })
+        .catch(err => { alert(`השמירה לטבלת הנזילות נכשלה: ${err.message}\nהבחירה תחול על הדוח הנוכחי בלבד.`); x.liquiditySource = 'default'; refresh(true); });
+      refresh(false);
+      return;
+    }
   }
   refresh(false);
 }

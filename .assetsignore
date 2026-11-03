@@ -10,3 +10,4 @@ wrangler.jsonc
 .gitignore
 CLAUDE.md
 README.md
+worker

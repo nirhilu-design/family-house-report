@@ -68,7 +68,7 @@ test('buildModel: ordering, channels, currency, checks', () => {
   const levels = Object.fromEntries(m.checks.map(c => [c.text, c.level]));
   assert.equal(levels['סכום 3 המנהלים תואם לשווי הכולל'], 'ok');
   assert.equal(levels['שיוך המנהלים לערוצים תואם לעמוד הערוצים'], 'ok');
-  assert.ok(m.checks.some(c => c.level === 'error' && c.text.startsWith('חסר סיווג נזילות')));
+  assert.ok(m.checks.some(c => c.level === 'error' && c.text.startsWith('מנהלים שאינם בטבלת הנזילות')));
 });
 
 test('colour ramp: dark → gold → pale, text contrast flips', () => {

@@ -75,3 +75,29 @@ table.map tr.flag td { background: #FBF6E8; }
   #print-root .fh-page { width: 210mm; height: 297mm; break-after: page; page-break-after: always; }
   #print-root .fh-page:last-child { break-after: auto; page-break-after: auto; }
 }
+
+/* admin page */
+.admin { max-width: 980px; margin: 0 auto; padding: 16px 20px 48px; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; margin-top: 16px; }
+.card h2 { font-size: 15px; margin: 0 0 10px; }
+.card h2 small { font-weight: 400; color: var(--muted); font-size: 12px; }
+.add-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: 10px 14px; align-items: end; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.toolbar h2 { margin: 0; }
+.toolbar-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.field.inline input { min-width: 200px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.admin-table td select { min-width: 140px; }
+.admin-table td.name { font-weight: 700; }
+.admin-table .small { font-size: 12px; }
+.admin-table .acts { white-space: nowrap; }
+.btn.small { min-height: 32px; padding: 0 12px; font-size: 13px; }
+.pill { display: inline-block; font-size: 12px; border-radius: 10px; padding: 1px 8px; }
+.pill.ok { background: #EEF5EF; color: var(--ok); }
+.pill.warn { background: #FBF6E8; color: var(--warn); }
+.muted { color: var(--muted); }
+.new-mgrs { border: 1px solid #E8D9A8; background: #FBF6E8; border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
+.new-mgrs strong { display: block; margin-bottom: 4px; }
+.new-mgrs .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }
+.new-mgrs select { min-height: 34px; font: inherit; }
+.app-bar a.btn { text-decoration: none; }

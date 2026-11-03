@@ -1,6 +1,17 @@
-// Cloudflare deployment: the app is static files served from the repo root (no build step).
+// Cloudflare deployment: static app from the repo root + a tiny Worker for the shared liquidity table.
+// Setup steps: docs/CLOUDFLARE.md
 {
   "name": "family-house-report",
+  "main": "worker/index.js",
   "compatibility_date": "2026-11-01",
-  "assets": { "directory": "./", "not_found_handling": "single-page-application" }
+  "assets": {
+    "directory": "./",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  // ACCESS_TEAM_DOMAIN and ACCESS_AUD are set in the Cloudflare dashboard (Settings → Variables);
+  // keep_vars stops deploys from wiping them. Without them the table is read-only.
+  "keep_vars": true
+  // Shared table storage – add after creating the KV namespace (docs/CLOUDFLARE.md, step 1):
+  // ,"kv_namespaces": [{ "binding": "LIQUIDITY", "id": "<namespace id>" }]
 }
