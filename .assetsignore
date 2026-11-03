@@ -1,0 +1,12 @@
+.git
+node_modules
+tests
+tools
+docs
+package.json
+package-lock.json
+wrangler.jsonc
+.assetsignore
+.gitignore
+CLAUDE.md
+README.md

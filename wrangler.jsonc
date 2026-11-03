@@ -1,0 +1,6 @@
+// Cloudflare deployment: the app is static files served from the repo root (no build step).
+{
+  "name": "family-house-report",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./", "not_found_handling": "single-page-application" }
+}
