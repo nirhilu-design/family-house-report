@@ -1,0 +1,21 @@
+{
+  "name": "family-house-report",
+  "version": "1.0.0",
+  "description": "Family House portfolio summary report generator",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "extract": "node tools/extract-cli.mjs",
+    "vendor": "node tools/vendor.mjs",
+    "serve": "npx --yes http-server -c-1 -p 8080 ."
+  },
+  "license": "ISC",
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38"
+  },
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@fontsource/assistant": "^5.3.0",
+    "@fontsource/carlito": "^5.3.0"
+  }
+}

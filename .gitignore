@@ -1,0 +1,9 @@
+node_modules/
+# client data must never be committed
+*.pdf
+*.json
+!package.json
+!package-lock.json
+samples/
+exports/
+.DS_Store

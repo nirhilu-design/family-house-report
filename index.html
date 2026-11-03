@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>מחולל דוח תמצית – Family House</title>
+  <link rel="icon" href="assets/logo-circle.png">
+  <link rel="stylesheet" href="css/report.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="app-bar">
+    <div class="brand">
+      <img src="assets/logo-circle.png" alt="" width="32" height="32">
+      <div>
+        <strong>מחולל דוח תמצית – Family House</strong>
+        <span>הקובץ נקרא ומעובד בדפדפן בלבד. שום נתון לא נשלח לשרת.</span>
+      </div>
+    </div>
+    <div class="actions">
+      <label class="btn">העלאת דוח PDF<input id="pdf-input" type="file" accept="application/pdf" hidden></label>
+      <label class="btn ghost">טעינת JSON<input id="json-input" type="file" accept="application/json" hidden></label>
+      <button class="btn ghost" id="save-json" disabled>שמירת JSON</button>
+      <button class="btn primary" id="export-pdf" disabled>ייצוא PDF</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <section id="drop" class="drop">
+      <div class="drop-inner">
+        <h1>גרור לכאן את הדוח התקופתי של JP Group (PDF)</h1>
+        <p>המערכת תחלץ את הנתונים, תציג לך את השיוך לכל שדה בדוח התמצית, ותאפשר לתקן לפני הייצוא.</p>
+        <label class="btn primary">בחירת קובץ<input id="pdf-input-2" type="file" accept="application/pdf" hidden></label>
+        <p id="status" class="status" role="status"></p>
+      </div>
+    </section>
+
+    <section id="workspace" class="workspace" hidden>
+      <aside class="mapping" id="mapping" aria-label="שיוך נתונים"></aside>
+      <div class="preview-wrap">
+        <div class="preview-bar">
+          <span>תצוגה מקדימה · A4</span>
+          <label>זום <input id="zoom" type="range" min="40" max="100" value="70"></label>
+        </div>
+        <div class="preview" id="preview"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="print-root" aria-hidden="true"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
