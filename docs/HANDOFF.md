@@ -11,7 +11,7 @@ Flow: upload → automatic extraction → consistency checks → mapping review 
 
 ### Principles
 - Old-money private-bank statement: restraint, one right-aligned axis, numbers carry the page.
-- Total value is prominent by position, not size (32px, right-aligned in the summary band). A big centred number was rejected.
+- Total value is prominent by position: 24px bold in the total row of the managers table (version B; the summary band was removed). A big centred number was rejected.
 - Every length/area in a chart equals a share of the portfolio. No decorative/arbitrary bars. No additional chart types.
 - **Single typeface:** Calibri everywhere (`Calibri, Carlito, Assistant, 'Segoe UI', Arial, sans-serif`). Serif was tried and rejected.
 
@@ -26,18 +26,17 @@ Flow: upload → automatic extraction → consistency checks → mapping review 
 
 A colour key line under the donuts states both rules.
 
-### Page 1 – סקירת תיק
-1. Header: "לקוח:" + client name (26px) + "דוח ריכוז השקעות ומנהלים"; logo with swoosh on the left.
-2. Summary band between two gold hairlines: total value (32px) + "נכון ליום"; then 4 KPIs: ILS 12M return, USD 12M return, FX exposure % (+ ₪M), number of managers.
-3. Panel (`#FAFAF9`) with three donuts: currency, geography, asset allocation (4 classes, darker = larger, centre = largest class) + one-line colour key ("darker = larger share"). Liquidity is NOT on page 1 (it is encoded in the page 2 bubbles).
-4. Manager exposure: one full-width 34px bar of all managers (sorted desc, ramp colours) + holdings table in two columns: swatch · **number** · name · weight · value ₪, total row.
+### Page 1 – סקירת תיק (version B, branch `version-b`)
+1. Header: "לקוח:" + client name (26px) + "דוח ריכוז השקעות ומנהלים"; logo with swoosh on the left. No summary band.
+2. "התפלגות מנהלי השקעות": one full-width 28px bar of all managers (sorted desc, ramp colours) + numbered holdings table: swatch · **number** · name · weight · value ₪. **Up to 8 managers → one column**, otherwise two columns. Total row: "סה״כ תיק 100%" + total value 24px bold.
+3. Panel (`#FAFAF9`) with three 100px donuts: currency, geography, asset allocation (4 classes, darker = larger, centre = largest class) + one-line colour key. Liquidity is NOT on page 1.
+4. Two returns tables (ILS / USD) side by side: manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table; USD title note "(סכומים מצוינים בשקלים)") · weight · 12M · 24M (cumulative). All percentages one decimal. Sorted by 12M desc, totals from the PDF. **Both tables always the same height**: the shorter one is padded with blank rows so the total rows line up.
 
 ### Page 2 – תשואות וסיכון
 1. Header: title, subtitle, client | date, round logo.
-2. Two returns tables (ILS / USD) side by side: manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table) · weight · 12M · 24M (cumulative). All percentages one decimal. Sorted by 12M desc, totals from the PDF. Neutral header colours (gold is reserved for "up to 1 year").
-3. Manager notes box (under the USD table) with signature line.
-4. Risk/return bubble chart: x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from the page 1 table**; legend in 4 columns below (advisory portfolio shown as "(ללא תשואה)").
-5. Footer: original PDF disclaimer (+ "בתודה, JP Group"), confidential line, page number.
+2. Risk/return bubble chart (drawn at 580×281, viewBox 682×330, centred): x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from the page 1 table**; legend in 4 columns below (advisory portfolio shown as "(ללא תשואה)").
+3. Manager notes box with signature line, under the chart legend.
+4. Footer: original PDF disclaimer (+ "בתודה, JP Group"), confidential line, page number.
 
 ## 3. Data mapping – source PDF → report
 Sections are located by **title text**, not page numbers (`TITLES` in `js/extract.js`).

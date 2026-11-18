@@ -1,7 +1,7 @@
 // Renders the two A4 report pages from the report model. Output is an HTML string
 // (no framework) so the same code drives the on-screen preview and the print export.
 import { ramp, textOn, LIQUIDITY } from './config.js';
-import { fmt, pct, mil } from './model.js';
+import { fmt, pct } from './model.js';
 
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const N = s => `<span class="n">${s}</span>`;
@@ -21,7 +21,7 @@ function donut(title, segs, center, aria) {
   }).join('');
   const legend = segs.map(s => `<span class="legend-item"><span class="sw" style="background:${s.color}"></span>${esc(s.label)} ${N(pct(s.pct))}</span>`).join('');
   return `<div class="donut"><span class="t">${title}</span>
-    <svg width="118" height="118" viewBox="0 0 140 140" role="img" aria-label="${esc(aria)}">
+    <svg width="100" height="100" viewBox="0 0 140 140" role="img" aria-label="${esc(aria)}">
       <g transform="rotate(-90 70 70)" fill="none" stroke-width="13">${arcs}</g>
       <text x="70" y="74" text-anchor="middle" font-size="24" fill="#2A2B2D" direction="ltr">${esc(center.value)}</text>
       <text x="70" y="93" text-anchor="middle" font-size="12" fill="#5E6064">${esc(center.label)}</text>
@@ -33,9 +33,6 @@ function footer(page, extra = '') {
 }
 
 export function renderPage1(m, assets) {
-  const fx = m.fx, ils = m.returns.ILS, usd = m.returns.USD;
-  const kpi = (v, l) => `<div class="kpi">${N(`<span class="v">${v}</span>`)}<span class="l">${l}</span></div>`;
-
   // asset allocation donut (darker = larger); centre shows the largest class
   const classes = [...m.assetClasses].sort((a, b) => b.value - a.value);
   const allocSegs = classes.map((c, i) => ({ label: c.label.replace(' ושו"מ', ''), pct: c.pct, color: ALLOC_COLORS[i] || ramp(i, classes.length) }));
@@ -52,16 +49,25 @@ export function renderPage1(m, assets) {
   const cur = twoGroup(m.currency?.groups, x => !/שקל/.test(x.label), 'מט״ח');
   const geo = twoGroup(m.geo?.groups, x => !/ישראל/.test(x.label), 'חו״ל');
 
-  // holdings bar + table (ramp: darker = larger)
+  // managers: graded bar + numbered table (ramp: darker = larger); up to 8 managers → one column
   const mgr = m.managers, n = mgr.length;
   const bar = mgr.map((x, i) => {
     const col = ramp(i, n), lbl = x.pct * 6.82 >= 36 ? `<span class="n" style="font-size:12px;font-weight:700">${pct(x.pct, 1)}</span>` : '';
     return `<div style="width:${x.pct}%;background:${col};color:${textOn(col)}">${lbl}</div>`;
   }).join('');
-  const half = Math.ceil(n / 2);
+  const oneCol = n <= 8;
+  const half = oneCol ? n : Math.ceil(n / 2);
   const row = (x, i) => `<div class="hrow"><span class="sq" style="background:${ramp(i, n)}"></span><span class="name"><span class="num n">${x.n}</span><span>${esc(x.name)}</span></span><span class="r n" style="font-weight:700">${pct(x.pct)}</span><span class="r n muted">${fmt(x.value)}</span></div>`;
   const head = `<div class="hrow head"><span></span><span>מנהל השקעות</span><span class="r">משקל</span><span class="r">שווי (₪)</span></div>`;
-  const totalRow = `<div class="hrow total"><span></span><span>סה״כ תיק</span><span class="r n">100%</span><span class="r n">${fmt(m.total)}</span></div>`;
+  const totalRow = `<div class="htotal"><span class="l">סה״כ תיק <span class="n muted">100%</span></span><span class="v n">${fmt(m.total)} ₪</span></div>`;
+  const cols = oneCol
+    ? `<div class="holdings-cols one"><div>${head}${mgr.map(row).join('')}${totalRow}</div></div>`
+    : `<div class="holdings-cols"><div>${head}${mgr.slice(0, half).map((x, i) => row(x, i)).join('')}</div><div>${head}${mgr.slice(half).map((x, i) => row(x, i + half)).join('')}${totalRow}</div></div>`;
+
+  // returns tables: both padded to the same number of rows so they are always the same height
+  const byCur = c => mgr.filter(x => x.currency === c && x.r12 != null).sort((a, b) => b.r12 - a.r12);
+  const ils = byCur('ILS'), usd = byCur('USD');
+  const rows = Math.max(ils.length, usd.length);
 
   return `<div class="fh-page p1" dir="rtl" lang="he">
   <div class="topline"></div>
@@ -73,12 +79,10 @@ export function renderPage1(m, assets) {
     </div>
     <img class="logo" src="${assets.logoFull}" alt="JP Group Wealth Management">
   </header>
-  <section class="band">
-    <div class="main"><span class="label">שווי תיק כולל</span><span class="value">${N(`${fmt(m.total)} ₪`)}</span><span style="font-size:12px" class="muted">נכון ליום ${N(dateDots(m.meta.reportDate))}</span></div>
-    ${kpi(ils ? pct(ils.total12) : '—', 'תשואה 12 ח׳<br>אפיקים שקליים')}
-    ${kpi(usd ? pct(usd.total12) : '—', 'תשואה 12 ח׳<br>אפיקים דולריים')}
-    ${kpi(fx ? pct(fx.pct, 1) : '—', `חשיפה למט״ח<br>${N(mil(fx?.value))}`)}
-    ${kpi(String(n), 'מנהלי<br>השקעות')}
+  <section class="sec">
+    <div class="sec-head ruled"><h2 class="big">התפלגות מנהלי השקעות</h2><span style="font-size:12px" class="muted">${n} מנהלים · מהגדול לקטן</span></div>
+    <div class="stack" style="height:28px;width:100%" role="img" aria-label="פס אחזקות לפי משקל בתיק">${bar}</div>
+    ${cols}
   </section>
   <section class="panel">
     ${donut('חשיפה מטבעית', cur.segs, cur.center, 'חשיפה מטבעית')}
@@ -86,20 +90,16 @@ export function renderPage1(m, assets) {
     ${donut('התפלגות נכסים לפי אפיק', allocSegs, allocCenter, 'התפלגות נכסים לפי אפיק')}
     <div class="key">מקרא צבעים: בכל התפלגות – גוון כהה יותר = נתח גדול יותר</div>
   </section>
-  <section class="sec">
-    <div class="sec-head ruled"><h2 class="big">חשיפה למנהלי השקעות</h2><span style="font-size:12px" class="muted">${n} מנהלים · מהגדול לקטן</span></div>
-    <div class="stack" style="height:34px;width:100%" role="img" aria-label="פס אחזקות לפי משקל בתיק">${bar}</div>
-    <div class="holdings-cols">
-      <div>${head}${mgr.slice(0, half).map((x, i) => row(x, i)).join('')}</div>
-      <div>${head}${mgr.slice(half).map((x, i) => row(x, i + half)).join('')}${totalRow}</div>
-    </div>
-  </section>
+  <div class="tables">
+    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS, '', rows)}</div>
+    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, '(סכומים מצוינים בשקלים)', rows)}</div>
+  </div>
   ${footer(1)}
 </div>`;
 }
 
 // Returns table: name · value in ₪ (as reported in the PDF, no conversion) · weight · 12M · 24M, one decimal.
-function returnsTable(title, rows, totals, note = '') {
+function returnsTable(title, rows, totals, note = '', padTo = 0) {
   const money = v => (v == null ? '—' : fmt(v));
   const neg = v => (v != null && v < 0 ? ';color:#9B3B2B' : '');
   const r = x => `<div class="rrow"><span>${esc(x.name)}</span><span class="r n">${money(x.value)}</span><span class="r n muted">${pct(x.pct, 1)}</span><span class="r n" style="font-weight:700${neg(x.r12)}">${pct(x.r12, 1)}</span><span class="r n${x.r24 < 0 ? '' : ' muted'}" style="${neg(x.r24).slice(1)}">${pct(x.r24, 1)}</span></div>`;
@@ -109,6 +109,7 @@ function returnsTable(title, rows, totals, note = '') {
     <div class="ttl"><span class="dot"></span><h2>${title}</h2>${note ? `<span class="muted" style="font-size:12px">${note}</span>` : ''}</div>
     <div class="rrow head"><span>מנהל השקעות</span><span class="r">שווי ₪</span><span class="r">משקל</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
     ${rows.map(r).join('')}
+    ${'<div class="rrow pad" aria-hidden="true"><span>&nbsp;</span></div>'.repeat(Math.max(0, padTo - rows.length))}
     <div class="rrow total"><span style="padding-right:4px">סה״כ</span><span class="r n">${money(v)}</span><span class="r n muted" style="font-weight:400">${pct(w, 1)}</span><span class="r n" style="color:#8A6A1C;font-size:15px">${pct(totals?.total12, 1)}</span><span class="r n" style="padding-left:4px">${pct(totals?.total24, 1)}</span></div>
   </section>`;
 }
@@ -159,12 +160,10 @@ function bubbleChart(m) {
     const halo = l.q.p.liquidity === "year" ? "#8A6A1C" : LQ.color;
     o.push(`<text x="${l.x.toFixed(1)}" y="${(l.y + 4.2).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="${LQ.text}" stroke="${halo}" stroke-width="2.5" paint-order="stroke">${l.q.p.n}</text>`);
   }
-  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="מפת סיכון-תשואה" style="display:block;direction:ltr">${o.join('')}</svg>`;
+  return `<svg width="580" height="281" viewBox="0 0 ${W} ${H}" role="img" aria-label="מפת סיכון-תשואה" style="display:block;direction:ltr;margin:0 auto">${o.join('')}</svg>`;
 }
 
 export function renderPage2(m, assets) {
-  const byCur = c => m.managers.filter(x => x.currency === c && x.r12 != null).sort((a, b) => b.r12 - a.r12);
-  const ils = byCur('ILS'), usd = byCur('USD');
   const notes = `<div class="notes"><span class="t">הערות מנהל ההשקעות</span><p>${m.meta.notes ? esc(m.meta.notes) : '[הערות לתקופה]'}</p><div class="sig">${placeholder(m.meta.signer, 'שם מנהל ההשקעות')}</div></div>`;
   const legend = m.managers.map(x => {
     const L = LIQUIDITY[x.liquidity];
@@ -179,15 +178,12 @@ export function renderPage2(m, assets) {
     <div style="display:flex;flex-direction:column;gap:3px"><h1>תשואות וסיכון</h1><span style="font-size:12px" class="muted">תשואה נומינלית לפי מנהל, במטבע המדידה</span></div>
     <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;color:#8A6A1C;font-weight:700">${placeholder(m.meta.clientName, 'שם הלקוח')} | ${N(dateDots(m.meta.reportDate))}</span><img class="logo" src="${assets.logoCircle}" alt="JP Group"></div>
   </header>
-  <div class="tables">
-    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS)}</div>
-    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, '(סכומים מצוינים בשקלים)')}${notes}</div>
-  </div>
   <section class="sec" style="margin-top:22px;gap:8px">
     <div class="sec-head ruled"><h2 class="big">מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center" class="muted">${liqLegend}<span>גודל = משקל · מספור כבעמוד 1</span></div></div>
     ${bubbleChart(m)}
     <div class="chart-legend">${legend}</div>
   </section>
+  <div style="margin-top:18px">${notes}</div>
   ${footer(2, `<p>${esc(m.disclaimer)}</p>`)}
 </div>`;
 }
