@@ -73,8 +73,9 @@
 .fh-page .rtbl { display: flex; flex-direction: column; }
 .fh-page .rtbl h2 { margin: 0; font-size: 17px; font-weight: 400; }
 .fh-page .rtbl .ttl { display: flex; align-items: center; gap: 8px; padding-bottom: 6px; }
+.fh-page .rtbl .ttl .rate { font-size: 12px; }
 .fh-page .rtbl .ttl .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
-.fh-page .rrow { display: grid; grid-template-columns: minmax(0, 1fr) 44px 56px 56px; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--hair-soft); font-size: 13px; }
+.fh-page .rrow { display: grid; grid-template-columns: minmax(0, 1fr) 62px 36px 42px 42px; gap: 4px; padding: 5px 0; border-bottom: 1px solid var(--hair-soft); font-size: 13px; }
 .fh-page .rrow.head { border-top: 2px solid var(--charcoal); border-bottom: 1px solid var(--hair); font-size: 12px; color: var(--muted); }
 .fh-page .rrow.total { padding: 7px 0; background: var(--total-bg); border-bottom: 2px solid var(--charcoal); font-weight: 700; align-items: baseline; }
 .fh-page .rrow .r { text-align: left; }

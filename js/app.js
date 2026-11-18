@@ -104,6 +104,7 @@ function renderMapping() {
       <label class="field">שם הלקוח<input data-path="meta.clientName" value="${esc(m.meta.clientName)}" placeholder="מר ישראל ישראלי"></label>
       <label class="field">תאריך הדוח ${src(1)}<input data-path="meta.reportDate" value="${esc(m.meta.reportDate)}" class="n"></label>
       <label class="field">שם מנהל ההשקעות (חתימה)<input data-path="meta.signer" value="${esc(m.meta.signer)}"></label>
+      <label class="field">שער יציג לדולר ליום הדוח (לחישוב שווי $ בעמוד 2)<input class="num" data-path="meta.usdRate" value="${m.meta.usdRate ?? ''}" inputmode="decimal" placeholder="לדוגמה 3.647"></label>
       <label class="field">מועד הפקת דוח המקור ${src(m.meta.pageCount)}<input value="${esc(m.meta.producedAt)}" readonly></label>
     </div>
     <label class="field" style="margin-top:10px">הערות מנהל ההשקעות (עמוד 2)<textarea data-path="meta.notes" placeholder="סקירת התקופה, הסבר לחריגות…">${esc(m.meta.notes)}</textarea></label>

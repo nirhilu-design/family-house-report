@@ -36,13 +36,10 @@ export function renderPage1(m, assets) {
   const fx = m.fx, ils = m.returns.ILS, usd = m.returns.USD;
   const kpi = (v, l) => `<div class="kpi">${N(`<span class="v">${v}</span>`)}<span class="l">${l}</span></div>`;
 
+  // asset allocation donut (darker = larger); centre shows the largest class
   const classes = [...m.assetClasses].sort((a, b) => b.value - a.value);
-  const ac = (i) => ALLOC_COLORS[i] || ramp(i, classes.length);
-  const stack = classes.map((c, i) => {
-    const col = ac(i), lbl = c.pct >= 6 ? N(pct(c.pct, 1)) : '';
-    return `<div style="width:${c.pct}%;min-width:6px;background:${col};color:${textOn(col)}">${lbl}</div>`;
-  }).join('');
-  const stackLegend = classes.map((c, i) => `<span class="legend-item"><span class="sw" style="background:${ac(i)}"></span>${esc(c.label.replace(' ושו"מ', ''))} ${N(pct(c.pct))}</span>`).join('');
+  const allocSegs = classes.map((c, i) => ({ label: c.label.replace(' ושו"מ', ''), pct: c.pct, color: ALLOC_COLORS[i] || ramp(i, classes.length) }));
+  const allocCenter = allocSegs[0] ? { value: pct(allocSegs[0].pct, 1), label: allocSegs[0].label } : { value: '—', label: '' };
 
   // two-group donuts: larger share dark, smaller gold
   const twoGroup = (groups, centerTest, centerLabel) => {
@@ -54,11 +51,6 @@ export function renderPage1(m, assets) {
   };
   const cur = twoGroup(m.currency?.groups, x => !/שקל/.test(x.label), 'מט״ח');
   const geo = twoGroup(m.geo?.groups, x => !/ישראל/.test(x.label), 'חו״ל');
-
-  // liquidity (semantic colours): locked dark, ≤1y gold, ≤1m light grey
-  const liqSum = k => m.managers.filter(x => x.liquidity === k).reduce((s, x) => s + x.value, 0);
-  const liqSegs = ['month', 'year', 'locked'].map(k => ({ label: LIQUIDITY[k].label, pct: m.total ? (liqSum(k) / m.total) * 100 : 0, color: LIQUIDITY[k].color }));
-  const liqPending = m.managers.some(x => x.liquiditySource !== 'saved');
 
   // holdings bar + table (ramp: darker = larger)
   const mgr = m.managers, n = mgr.length;
@@ -88,16 +80,11 @@ export function renderPage1(m, assets) {
     ${kpi(fx ? pct(fx.pct, 1) : '—', `חשיפה למט״ח<br>${N(mil(fx?.value))}`)}
     ${kpi(String(n), 'מנהלי<br>השקעות')}
   </section>
-  <section class="sec">
-    <div class="sec-head"><h2 class="small">התפלגות נכסים לפי אפיק</h2><span style="font-size:12px" class="muted">נתונים נוכחיים</span></div>
-    <div class="stack" style="height:28px" role="img" aria-label="התפלגות נכסים לפי אפיק">${stack}</div>
-    <div class="legend-row">${stackLegend}</div>
-  </section>
   <section class="panel">
     ${donut('חשיפה מטבעית', cur.segs, cur.center, 'חשיפה מטבעית')}
     ${donut('חשיפה גאוגרפית', geo.segs, geo.center, 'חשיפה גאוגרפית')}
-    ${donut(`פרופיל נזילות${liqPending ? ' <span style="font-weight:400;color:#8A6A1C">[סיווג לאישור]</span>' : ''}`, liqSegs, { value: pct(liqSegs[0].pct, 1), label: 'נזיל' }, 'פרופיל נזילות')}
-    <div class="key">מקרא צבעים: בכל התפלגות – גוון כהה יותר = נתח גדול יותר · בנזילות: כהה = נעול מעל שנה · זהב = עד שנה · אפור בהיר = נזיל עד חודש</div>
+    ${donut('התפלגות נכסים לפי אפיק', allocSegs, allocCenter, 'התפלגות נכסים לפי אפיק')}
+    <div class="key">מקרא צבעים: בכל התפלגות – גוון כהה יותר = נתח גדול יותר</div>
   </section>
   <section class="sec">
     <div class="sec-head ruled"><h2 class="big">חשיפה למנהלי השקעות</h2><span style="font-size:12px" class="muted">${n} מנהלים · מהגדול לקטן</span></div>
@@ -111,17 +98,22 @@ export function renderPage1(m, assets) {
 </div>`;
 }
 
-function returnsTable(title, rows, totals) {
-  const r = x => {
-    const neg = v => (v != null && v < 0 ? ' style="color:#9B3B2B"' : '');
-    return `<div class="rrow"><span>${esc(x.name)}</span><span class="r n muted">${pct(x.pct, 1)}</span><span class="r n" style="font-weight:700${x.r12 < 0 ? ';color:#9B3B2B' : ''}">${pct(x.r12)}</span><span class="r n${x.r24 < 0 ? '' : ' muted'}"${neg(x.r24)}>${pct(x.r24)}</span></div>`;
-  };
+// Returns table: name · value (₪, or $ at the report-date rate) · weight · 12M · 24M, one decimal.
+function returnsTable(title, rows, totals, cur, m) {
+  const rate = cur === 'USD' ? Number(m.meta.usdRate) || null : 1;
+  const money = v => (v == null || !rate ? '—' : fmt(v / rate));
+  const neg = v => (v != null && v < 0 ? ';color:#9B3B2B' : '');
+  const r = x => `<div class="rrow"><span>${esc(x.name)}</span><span class="r n">${money(x.value)}</span><span class="r n muted">${pct(x.pct, 1)}</span><span class="r n" style="font-weight:700${neg(x.r12)}">${pct(x.r12, 1)}</span><span class="r n${x.r24 < 0 ? '' : ' muted'}" style="${neg(x.r24).slice(1)}">${pct(x.r24, 1)}</span></div>`;
   const w = rows.reduce((s, x) => s + (x.pct || 0), 0);
+  const v = rows.reduce((s, x) => s + (x.value || 0), 0);
+  const note = cur === 'USD'
+    ? `<span class="rate muted">${rate ? `שער יציג ${N(String(rate))} ליום ${N(dateDots(m.meta.reportDate))}` : '<span class="placeholder">[חסר שער יציג לדולר]</span>'}</span>`
+    : '';
   return `<section class="rtbl">
-    <div class="ttl"><span class="dot"></span><h2>${title}</h2></div>
-    <div class="rrow head"><span>מנהל השקעות</span><span class="r">משקל</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
+    <div class="ttl"><span class="dot"></span><h2>${title}</h2>${note}</div>
+    <div class="rrow head"><span>מנהל השקעות</span><span class="r">שווי ${cur === 'USD' ? '$' : '₪'}</span><span class="r">משקל</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
     ${rows.map(r).join('')}
-    <div class="rrow total"><span style="padding-right:4px">סה״כ</span><span class="r n muted" style="font-weight:400">${pct(w, 1)}</span><span class="r n" style="color:#8A6A1C;font-size:17px">${pct(totals?.total12)}</span><span class="r n" style="padding-left:4px">${pct(totals?.total24)}</span></div>
+    <div class="rrow total"><span style="padding-right:4px">סה״כ</span><span class="r n">${money(v)}</span><span class="r n muted" style="font-weight:400">${pct(w, 1)}</span><span class="r n" style="color:#8A6A1C;font-size:15px">${pct(totals?.total12, 1)}</span><span class="r n" style="padding-left:4px">${pct(totals?.total24, 1)}</span></div>
   </section>`;
 }
 
@@ -192,8 +184,8 @@ export function renderPage2(m, assets) {
     <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;color:#8A6A1C;font-weight:700">${placeholder(m.meta.clientName, 'שם הלקוח')} | ${N(dateDots(m.meta.reportDate))}</span><img class="logo" src="${assets.logoCircle}" alt="JP Group"></div>
   </header>
   <div class="tables">
-    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS)}</div>
-    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD)}${notes}</div>
+    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS, 'ILS', m)}</div>
+    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, 'USD', m)}${notes}</div>
   </div>
   <section class="sec" style="margin-top:22px;gap:8px">
     <div class="sec-head ruled"><h2 class="big">מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center" class="muted">${liqLegend}<span>גודל = משקל · מספור כבעמוד 1</span></div></div>
