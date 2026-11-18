@@ -98,20 +98,16 @@ export function renderPage1(m, assets) {
 </div>`;
 }
 
-// Returns table: name · value (₪, or $ at the report-date rate) · weight · 12M · 24M, one decimal.
-function returnsTable(title, rows, totals, cur, m) {
-  const rate = cur === 'USD' ? Number(m.meta.usdRate) || null : 1;
-  const money = v => (v == null || !rate ? '—' : fmt(v / rate));
+// Returns table: name · value in ₪ (as reported in the PDF, no conversion) · weight · 12M · 24M, one decimal.
+function returnsTable(title, rows, totals) {
+  const money = v => (v == null ? '—' : fmt(v));
   const neg = v => (v != null && v < 0 ? ';color:#9B3B2B' : '');
   const r = x => `<div class="rrow"><span>${esc(x.name)}</span><span class="r n">${money(x.value)}</span><span class="r n muted">${pct(x.pct, 1)}</span><span class="r n" style="font-weight:700${neg(x.r12)}">${pct(x.r12, 1)}</span><span class="r n${x.r24 < 0 ? '' : ' muted'}" style="${neg(x.r24).slice(1)}">${pct(x.r24, 1)}</span></div>`;
   const w = rows.reduce((s, x) => s + (x.pct || 0), 0);
   const v = rows.reduce((s, x) => s + (x.value || 0), 0);
-  const note = cur === 'USD'
-    ? `<span class="rate muted">${rate ? `שער יציג ${N(String(rate))} ליום ${N(dateDots(m.meta.reportDate))}` : '<span class="placeholder">[חסר שער יציג לדולר]</span>'}</span>`
-    : '';
   return `<section class="rtbl">
-    <div class="ttl"><span class="dot"></span><h2>${title}</h2>${note}</div>
-    <div class="rrow head"><span>מנהל השקעות</span><span class="r">שווי ${cur === 'USD' ? '$' : '₪'}</span><span class="r">משקל</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
+    <div class="ttl"><span class="dot"></span><h2>${title}</h2></div>
+    <div class="rrow head"><span>מנהל השקעות</span><span class="r">שווי ₪</span><span class="r">משקל</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
     ${rows.map(r).join('')}
     <div class="rrow total"><span style="padding-right:4px">סה״כ</span><span class="r n">${money(v)}</span><span class="r n muted" style="font-weight:400">${pct(w, 1)}</span><span class="r n" style="color:#8A6A1C;font-size:15px">${pct(totals?.total12, 1)}</span><span class="r n" style="padding-left:4px">${pct(totals?.total24, 1)}</span></div>
   </section>`;
@@ -184,8 +180,8 @@ export function renderPage2(m, assets) {
     <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;color:#8A6A1C;font-weight:700">${placeholder(m.meta.clientName, 'שם הלקוח')} | ${N(dateDots(m.meta.reportDate))}</span><img class="logo" src="${assets.logoCircle}" alt="JP Group"></div>
   </header>
   <div class="tables">
-    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS, 'ILS', m)}</div>
-    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, 'USD', m)}${notes}</div>
+    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS)}</div>
+    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD)}${notes}</div>
   </div>
   <section class="sec" style="margin-top:22px;gap:8px">
     <div class="sec-head ruled"><h2 class="big">מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center" class="muted">${liqLegend}<span>גודל = משקל · מספור כבעמוד 1</span></div></div>

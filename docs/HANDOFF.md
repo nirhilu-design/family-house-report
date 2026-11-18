@@ -34,7 +34,7 @@ A colour key line under the donuts states both rules.
 
 ### Page 2 – תשואות וסיכון
 1. Header: title, subtitle, client | date, round logo.
-2. Two returns tables (ILS / USD) side by side: manager · value (full amount: ₪ in the ILS table, $ in the USD table = ₪ value ÷ the USD representative rate on the report date, shown under the USD title) · weight · 12M · 24M (cumulative). All percentages one decimal. Sorted by 12M desc, totals from the PDF. Neutral header colours (gold is reserved for "up to 1 year").
+2. Two returns tables (ILS / USD) side by side: manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table) · weight · 12M · 24M (cumulative). All percentages one decimal. Sorted by 12M desc, totals from the PDF. Neutral header colours (gold is reserved for "up to 1 year").
 3. Manager notes box (under the USD table) with signature line.
 4. Risk/return bubble chart: x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from the page 1 table**; legend in 4 columns below (advisory portfolio shown as "(ללא תשואה)").
 5. Footer: original PDF disclaimer (+ "בתודה, JP Group"), confidential line, page number.
@@ -57,7 +57,6 @@ Sections are located by **title text**, not page numbers (`TITLES` in `js/extrac
 | USD returns | תשואות השקעות במט"ח | same | |
 | Std-dev | "גרף מדדי יעילות התיק ל-12 חודשים" under each returns table | vector markers (small filled circles) | axes fitted from tick labels; markers matched to managers by rank of 12M return |
 | Disclaimer | text starting "חשוב לציין" | until "בתודה / JP Group" | |
-| USD representative rate | **not in PDF** | — | entered in the mapping panel (`meta.usdRate`); used only for the $ column on page 2; warning if missing |
 | Liquidity | **not in PDF** | — | shared liquidity table (Cloudflare KV, `admin.html`); provisional defaults in `js/config.js` until confirmed; a manager missing from both is flagged and its choice is saved to the table |
 | Client name, notes, signer | **not in PDF** | — | manual |
 

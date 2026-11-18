@@ -38,7 +38,7 @@ export function buildModel(raw, saved = {}) {
   const model = {
     version: 1,
     meta: {
-      clientName: '', notes: '', signer: '', usdRate: null,
+      clientName: '', notes: '', signer: '',
       reportDate: raw.meta?.reportDate || '', producedAt: raw.meta?.producedAt || '',
       pageCount: raw.pageCount,
     },
@@ -107,7 +107,6 @@ export function runChecks(m, raw = null) {
   const defLiq = m.managers.filter(x => x.liquiditySource === 'default');
   if (defLiq.length) add('warn', `סיווג נזילות זמני (ברירת מחדל, לאישור) עבור ${defLiq.length} מנהלים`);
   if (!m.meta.clientName) add('warn', 'לא הוזן שם לקוח');
-  if (m.returns.USD && !(Number(m.meta.usdRate) > 0)) add('warn', 'לא הוזן שער יציג לדולר ליום הדוח – עמודת השווי בטבלת הדולר תוצג ריקה');
   if (m.managers.length > 16) add('warn', `${m.managers.length} מנהלים — טבלת האחזקות עלולה לא להיכנס בעמוד 1`);
   return out;
 }
