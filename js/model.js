@@ -44,8 +44,8 @@ export function buildModel(raw, saved = {}) {
     },
     total,
     returns: {
-      ILS: raw.retILS ? { total12: raw.retILS.total?.r12 ?? null, total24: raw.retILS.total?.r24 ?? null, page: raw.retILS.page } : null,
-      USD: raw.retUSD ? { total12: raw.retUSD.total?.r12 ?? null, total24: raw.retUSD.total?.r24 ?? null, page: raw.retUSD.page } : null,
+      ILS: raw.retILS ? { totalYtd: raw.retILS.total?.ytd ?? null, total12: raw.retILS.total?.r12 ?? null, total24: raw.retILS.total?.r24 ?? null, page: raw.retILS.page } : null,
+      USD: raw.retUSD ? { totalYtd: raw.retUSD.total?.ytd ?? null, total12: raw.retUSD.total?.r12 ?? null, total24: raw.retUSD.total?.r24 ?? null, page: raw.retUSD.page } : null,
     },
     fx: fxGroup ? { value: fxGroup.value, pct: fxGroup.pct, page: raw.currency.page } : null,
     abroad: abroad ? { value: abroad.value, pct: abroad.pct, page: raw.geo.page } : null,

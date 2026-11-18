@@ -102,19 +102,18 @@ export function renderPage1(m, assets, { onePage = false } = {}) {
 </div>`;
 }
 
-// Returns table: name · value in ₪ (as reported in the PDF, no conversion) · weight · 12M · 24M, one decimal.
+// Returns table: number (as in the managers table / chart) · name · value in ₪ (as reported, no conversion) · YTD · 12M · 24M, one decimal.
 function returnsTable(title, rows, totals, note = '', padTo = 0) {
   const money = v => (v == null ? '—' : fmt(v));
-  const neg = v => (v != null && v < 0 ? ';color:#9B3B2B' : '');
-  const r = x => `<div class="rrow"><span>${esc(x.name)}</span><span class="r n">${money(x.value)}</span><span class="r n muted">${pct(x.pct, 1)}</span><span class="r n" style="font-weight:700${neg(x.r12)}">${pct(x.r12, 1)}</span><span class="r n${x.r24 < 0 ? '' : ' muted'}" style="${neg(x.r24).slice(1)}">${pct(x.r24, 1)}</span></div>`;
-  const w = rows.reduce((s, x) => s + (x.pct || 0), 0);
+  const neg = v => (v != null && v < 0 ? 'color:#9B3B2B' : '');
+  const r = x => `<div class="rrow"><span class="name"><span class="num n">${x.n}</span><span>${esc(x.name)}</span></span><span class="r n">${money(x.value)}</span><span class="r n muted" style="${neg(x.ytd)}">${pct(x.ytd, 1)}</span><span class="r n" style="font-weight:700;${neg(x.r12)}">${pct(x.r12, 1)}</span><span class="r n${x.r24 < 0 ? '' : ' muted'}" style="${neg(x.r24)}">${pct(x.r24, 1)}</span></div>`;
   const v = rows.reduce((s, x) => s + (x.value || 0), 0);
   return `<section class="rtbl">
     <div class="ttl"><span class="dot"></span><h2>${title}</h2>${note ? `<span class="muted" style="font-size:12px">${note}</span>` : ''}</div>
-    <div class="rrow head"><span>מנהל השקעות</span><span class="r">שווי ₪</span><span class="r">משקל</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
+    <div class="rrow head"><span>מנהל השקעות</span><span class="r">שווי ₪</span><span class="r">YTD</span><span class="r">12 ח׳</span><span class="r">24 ח׳</span></div>
     ${rows.map(r).join('')}
     ${'<div class="rrow pad" aria-hidden="true"><span>&nbsp;</span></div>'.repeat(Math.max(0, padTo - rows.length))}
-    <div class="rrow total"><span style="padding-right:4px">סה״כ</span><span class="r n">${money(v)}</span><span class="r n muted" style="font-weight:400">${pct(w, 1)}</span><span class="r n" style="color:#8A6A1C;font-size:15px">${pct(totals?.total12, 1)}</span><span class="r n" style="padding-left:4px">${pct(totals?.total24, 1)}</span></div>
+    <div class="rrow total"><span style="padding-right:4px">סה״כ</span><span class="r n">${money(v)}</span><span class="r n muted" style="font-weight:400">${pct(totals?.totalYtd, 1)}</span><span class="r n" style="color:#8A6A1C;font-size:15px">${pct(totals?.total12, 1)}</span><span class="r n" style="padding-left:4px">${pct(totals?.total24, 1)}</span></div>
   </section>`;
 }
 
