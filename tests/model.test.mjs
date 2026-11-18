@@ -89,3 +89,13 @@ test('findSimilar: renamed manager inherits liquidity from a containing name; am
   // "הזדמנויות" alone matches two entries with different liquidity → no guess
   assert.equal(findSimilar(table, 'הזדמנויות'), null);
 });
+
+test('chooseLayout: ≤6 managers → one page; otherwise tables on page 1 if they fit, else page 2', async () => {
+  const { chooseLayout } = await import('../js/render.js');
+  const mk = (n, ils) => ({ managers: Array.from({ length: n }, (_, i) => ({ n: i + 1, currency: i < ils ? 'ILS' : 'USD', r12: 1 })) });
+  assert.equal(chooseLayout(mk(6, 3)).mode, 'one');
+  assert.equal(chooseLayout(mk(6, 4)).chartH, 126);       // one extra row → shorter chart, still one page
+  assert.equal(chooseLayout(mk(6, 6)).mode, 'tables-p1'); // one-page would not fit → two pages
+  assert.equal(chooseLayout(mk(15, 9)).mode, 'tables-p1'); // 8 + 9 rows fit on page 1
+  assert.equal(chooseLayout(mk(16, 12)).mode, 'tables-p2');
+});

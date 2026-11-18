@@ -37,7 +37,9 @@ A colour key line under the donuts states both rules.
 2. Risk/return bubble chart (drawn at 580×281, viewBox 682×330, centred): x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from the page 1 table**; legend in 4 columns below (advisory portfolio shown as "(ללא תשואה)").
 3. Manager notes box with signature line, under the chart legend.
 
-One-page option (`renderPage1(m, assets, { onePage: true })`, not wired into the app yet): same page 1 top; full-width chart (150px, tight axis) under the returns tables; no notes; disclaimer in the footer; "עמוד 1 מתוך 1". Fits ~6 managers.
+**Automatic layout** (`chooseLayout()` in `js/render.js`, deterministic from row counts, 24px per table row):
+- **≤ 6 managers → one page**: same page 1 top; full-width chart (150px, tight axis; shortened by 24px per extra row, min 110) under the returns tables; no notes; disclaimer in the footer; "עמוד 1 מתוך 1". If even that does not fit, falls back to two pages.
+- **> 6 managers → two pages**: returns tables stay on page 1 while holdings rows + returns rows ≤ 17; otherwise they move to the top of page 2 (notes under the USD table, chart shrunk to fit).
 4. Footer: original PDF disclaimer (+ "בתודה, JP Group"), confidential line, page number.
 
 ## 3. Data mapping – source PDF → report

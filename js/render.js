@@ -32,7 +32,41 @@ function footer(page, extra = '', pages = 2) {
   return `<footer class="ftr">${extra}<div class="line"><span class="conf">CONFIDENTIAL · JP GROUP FAMILY HOUSE</span><span class="muted">עמוד ${page} מתוך ${pages}</span></div></footer>`;
 }
 
-export function renderPage1(m, assets, { onePage = false } = {}) {
+// ---------- layout choice (deterministic, from row counts) ----------
+// Measured on the fixed 794×1123 page: every table row is 24px. Page 1 with the returns
+// tables ends at 633 + 24 × (holding rows + returns rows); the footer starts at 1067.
+// One-page layout (chart under the tables) ends at 1007 + 24 × (rows − 9) + (chart − 150); footer at ~1016.
+export const ROW_H = 24;
+const returnRows = m => {
+  const c = cur => m.managers.filter(x => x.currency === cur && x.r12 != null).length;
+  return Math.max(c('ILS'), c('USD'));
+};
+const holdRows = n => (n <= 8 ? n : Math.ceil(n / 2));
+export function chooseLayout(m) {
+  const n = m.managers.length, rows = holdRows(n) + returnRows(m);
+  if (n <= 6) {
+    const chartH = CHART_H - Math.max(0, rows - 9) * ROW_H;
+    if (chartH >= 110) return { mode: 'one', pages: 1, chartH };
+  }
+  if (rows <= 17) return { mode: 'tables-p1', pages: 2 };
+  // tables on page 2: page 2 ends at 374 + 24 × returns rows + chart height + 25 × legend rows; shrink the chart to fit (footer ~1018)
+  const legendRows = Math.ceil(n / 4);
+  const p2ChartH = Math.max(200, Math.min(281, 1008 - 374 - ROW_H * returnRows(m) - 25 * legendRows));
+  return { mode: 'tables-p2', pages: 2, p2ChartH };
+}
+
+function returnsBlock(m, notes = '') {
+  const byCur = c => m.managers.filter(x => x.currency === c && x.r12 != null).sort((a, b) => b.r12 - a.r12);
+  const ils = byCur('ILS'), usd = byCur('USD');
+  const rows = Math.max(ils.length, usd.length); // pad the shorter table so both are the same height
+  return `<div class="tables">
+    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS, '', rows)}</div>
+    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, '(סכומים מצוינים בשקלים)', rows)}${notes}</div>
+  </div>`;
+}
+
+export function renderPage1(m, assets, layout = chooseLayout(m)) {
+  const onePage = layout.mode === 'one';
   // asset allocation donut (darker = larger); centre shows the largest class
   const classes = [...m.assetClasses].sort((a, b) => b.value - a.value);
   const allocSegs = classes.map((c, i) => ({ label: c.label.replace(' ושו"מ', ''), pct: c.pct, color: ALLOC_COLORS[i] || ramp(i, classes.length) }));
@@ -64,10 +98,6 @@ export function renderPage1(m, assets, { onePage = false } = {}) {
     ? `<div class="holdings-cols one"><div>${head}${mgr.map(row).join('')}${totalRow}</div></div>`
     : `<div class="holdings-cols"><div>${head}${mgr.slice(0, half).map((x, i) => row(x, i)).join('')}</div><div>${head}${mgr.slice(half).map((x, i) => row(x, i + half)).join('')}${totalRow}</div></div>`;
 
-  // returns tables: both padded to the same number of rows so they are always the same height
-  const byCur = c => mgr.filter(x => x.currency === c && x.r12 != null).sort((a, b) => b.r12 - a.r12);
-  const ils = byCur('ILS'), usd = byCur('USD');
-  const rows = Math.max(ils.length, usd.length);
 
   return `<div class="fh-page p1${onePage ? ' one-page' : ''}" dir="rtl" lang="he">
   <div class="topline"></div>
@@ -90,13 +120,10 @@ export function renderPage1(m, assets, { onePage = false } = {}) {
     ${donut('התפלגות נכסים לפי אפיק', allocSegs, allocCenter, 'התפלגות נכסים לפי אפיק')}
     <div class="key">מקרא צבעים: בכל התפלגות – גוון כהה יותר = נתח גדול יותר</div>
   </section>
-  <div class="tables">
-    <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS, '', rows)}</div>
-    <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, '(סכומים מצוינים בשקלים)', rows)}</div>
-  </div>
+  ${layout.mode === 'tables-p2' ? '' : returnsBlock(m)}
   ${onePage ? `<section class="wide-chart">
     <div class="ttl"><span class="dot"></span><h2>מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center;margin-right:auto" class="muted">${liqLegend()}<span>גודל = משקל · מספור כבטבלת המנהלים</span></div></div>
-    ${bubbleChart(m, { W: 682, H: CHART_H, dispW: 682, tight: true, rMax: 11 })}
+    ${bubbleChart(m, { W: 682, H: layout.chartH || CHART_H, dispW: 682, tight: true, rMax: 11 })}
   </section>` : ''}
   ${onePage ? footer(1, `<p>${esc(m.disclaimer)}</p>`, 1) : footer(1)}
 </div>`;
@@ -170,7 +197,8 @@ function bubbleChart(m, { W = 682, H = 330, dispW = W === 682 ? 580 : W, dispH =
   return `<svg width="${dispW}" height="${dispH}" viewBox="0 0 ${W} ${H}" role="img" aria-label="מפת סיכון-תשואה" style="display:block;direction:ltr;margin:0 auto">${o.join('')}</svg>`;
 }
 
-export function renderPage2(m, assets) {
+export function renderPage2(m, assets, layout = chooseLayout(m)) {
+  const withTables = layout.mode === 'tables-p2';
   const notes = `<div class="notes"><span class="t">הערות מנהל ההשקעות</span><p>${m.meta.notes ? esc(m.meta.notes) : '[הערות לתקופה]'}</p><div class="sig">${placeholder(m.meta.signer, 'שם מנהל ההשקעות')}</div></div>`;
   const legend = m.managers.map(x => {
     const L = LIQUIDITY[x.liquidity];
@@ -184,16 +212,20 @@ export function renderPage2(m, assets) {
     <div style="display:flex;flex-direction:column;gap:3px"><h1>תשואות וסיכון</h1><span style="font-size:12px" class="muted">תשואה נומינלית לפי מנהל, במטבע המדידה</span></div>
     <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;color:#8A6A1C;font-weight:700">${placeholder(m.meta.clientName, 'שם הלקוח')} | ${N(dateDots(m.meta.reportDate))}</span><img class="logo" src="${assets.logoCircle}" alt="JP Group"></div>
   </header>
+  ${withTables ? returnsBlock(m, notes) : ''}
   <section class="sec" style="margin-top:22px;gap:8px">
     <div class="sec-head ruled"><h2 class="big">מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center" class="muted">${liqLegend()}<span>גודל = משקל · מספור כבעמוד 1</span></div></div>
-    ${bubbleChart(m)}
+    ${bubbleChart(m, layout.p2ChartH ? { dispW: Math.round(layout.p2ChartH * 682 / 330) } : {})}
     <div class="chart-legend">${legend}</div>
   </section>
-  <div style="margin-top:18px">${notes}</div>
+  ${withTables ? '' : `<div style="margin-top:18px">${notes}</div>`}
   ${footer(2, `<p>${esc(m.disclaimer)}</p>`)}
 </div>`;
 }
 
+// ≤ 6 managers → everything on one page (if it fits); otherwise two pages, with the returns
+// tables on page 1 when they fit there and on page 2 when they don't.
 export function renderReport(m, assets) {
-  return renderPage1(m, assets) + renderPage2(m, assets);
+  const layout = chooseLayout(m);
+  return layout.pages === 1 ? renderPage1(m, assets, layout) : renderPage1(m, assets, layout) + renderPage2(m, assets, layout);
 }

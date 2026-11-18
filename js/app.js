@@ -2,7 +2,7 @@
 import * as pdfjs from '../vendor/pdfjs/pdf.min.mjs';
 import { extractReport } from './extract.js';
 import { buildModel, runChecks, fmt } from './model.js';
-import { renderReport } from './render.js';
+import { renderReport, chooseLayout } from './render.js';
 import { LIQUIDITY, CHANNELS } from './config.js';
 import { loadTable, saveEntry, asOverrides, findSimilar } from './store.js';
 
@@ -217,7 +217,7 @@ function onEdit(e) {
 // ---------- preview & export ----------
 function renderPreview() {
   const z = Number($('#zoom').value) / 100;
-  const h = (1123 + 20) * 2;
+  const h = (1123 + 20) * chooseLayout(model).pages;
   $('#preview').innerHTML = `<div style="position:relative;width:${794 * z}px;height:${h * z}px;flex:none"><div style="position:absolute;top:0;left:0;transform:scale(${z});transform-origin:0 0;direction:ltr">${renderReport(model, ASSETS)}</div></div>`;
 }
 
