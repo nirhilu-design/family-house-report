@@ -30,12 +30,14 @@ A colour key line under the donuts states both rules.
 1. Header: "לקוח:" + client name (26px) + "דוח ריכוז השקעות ומנהלים"; logo with swoosh on the left. No summary band.
 2. "התפלגות מנהלי השקעות": one full-width 28px bar of all managers (sorted desc, ramp colours) + numbered holdings table: swatch · **number** · name · weight · value ₪. **Up to 8 managers → one column**, otherwise two columns. Total row: "סה״כ תיק 100%" + total value 24px bold.
 3. Panel (`#FAFAF9`) with three 100px donuts: currency, geography, asset allocation (4 classes, darker = larger, centre = largest class) + one-line colour key. Liquidity is NOT on page 1.
-4. Two returns tables (ILS / USD) side by side: manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table; USD title note "(סכומים מצוינים בשקלים)") · weight · 12M · 24M (cumulative). All percentages one decimal. Sorted by 12M desc, totals from the PDF. **Both tables always the same height**: the shorter one is padded with blank rows so the total rows line up.
+4. Two returns tables (ILS / USD) side by side: **manager number** (same as the managers table and the chart bubbles) + manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table; USD title note "(סכומים מצוינים בשקלים)") · YTD · 12M · 24M (cumulative). Names stay on one line. All percentages one decimal. Sorted by 12M desc, totals from the PDF. **Both tables always the same height**: the shorter one is padded with blank rows so the total rows line up.
 
 ### Page 2 – תשואות וסיכון
 1. Header: title, subtitle, client | date, round logo.
 2. Risk/return bubble chart (drawn at 580×281, viewBox 682×330, centred): x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from the page 1 table**; legend in 4 columns below (advisory portfolio shown as "(ללא תשואה)").
 3. Manager notes box with signature line, under the chart legend.
+
+One-page option (`renderPage1(m, assets, { onePage: true })`, not wired into the app yet): same page 1 top; full-width chart (150px, tight axis) under the returns tables; no notes; disclaimer in the footer; "עמוד 1 מתוך 1". Fits ~6 managers.
 4. Footer: original PDF disclaimer (+ "בתודה, JP Group"), confidential line, page number.
 
 ## 3. Data mapping – source PDF → report
