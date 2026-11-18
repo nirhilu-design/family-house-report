@@ -61,6 +61,10 @@
 /* holdings */
 .fh-page .holdings-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
 .fh-page .holdings-cols.one { grid-template-columns: minmax(0, 1fr); }
+.fh-page .side-chart { display: flex; flex-direction: column; gap: 2px; }
+.fh-page .side-chart .sc-head { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--ink); }
+.fh-page .side-chart .sc-t { font-size: 12px; font-weight: 700; color: var(--muted); }
+.fh-page .side-chart .sc-lg { display: flex; gap: 12px; justify-content: center; font-size: 11px; }
 .fh-page .htotal { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 8px 6px; background: var(--total-bg); border-bottom: 1px solid var(--ink); }
 .fh-page .htotal .l { font-size: 14px; font-weight: 700; }
 .fh-page .htotal .l .n { font-size: 12px; font-weight: 400; }

@@ -28,11 +28,11 @@ function donut(title, segs, center, aria) {
     </svg><div class="lg">${legend}</div></div>`;
 }
 
-function footer(page, extra = '') {
-  return `<footer class="ftr">${extra}<div class="line"><span class="conf">CONFIDENTIAL · JP GROUP FAMILY HOUSE</span><span class="muted">עמוד ${page} מתוך 2</span></div></footer>`;
+function footer(page, extra = '', pages = 2) {
+  return `<footer class="ftr">${extra}<div class="line"><span class="conf">CONFIDENTIAL · JP GROUP FAMILY HOUSE</span><span class="muted">עמוד ${page} מתוך ${pages}</span></div></footer>`;
 }
 
-export function renderPage1(m, assets) {
+export function renderPage1(m, assets, { onePage = false } = {}) {
   // asset allocation donut (darker = larger); centre shows the largest class
   const classes = [...m.assetClasses].sort((a, b) => b.value - a.value);
   const allocSegs = classes.map((c, i) => ({ label: c.label.replace(' ושו"מ', ''), pct: c.pct, color: ALLOC_COLORS[i] || ramp(i, classes.length) }));
@@ -60,8 +60,13 @@ export function renderPage1(m, assets) {
   const row = (x, i) => `<div class="hrow"><span class="sq" style="background:${ramp(i, n)}"></span><span class="name"><span class="num n">${x.n}</span><span>${esc(x.name)}</span></span><span class="r n" style="font-weight:700">${pct(x.pct)}</span><span class="r n muted">${fmt(x.value)}</span></div>`;
   const head = `<div class="hrow head"><span></span><span>מנהל השקעות</span><span class="r">משקל</span><span class="r">שווי (₪)</span></div>`;
   const totalRow = `<div class="htotal"><span class="l">סה״כ תיק <span class="n muted">100%</span></span><span class="v n">${fmt(m.total)} ₪</span></div>`;
+  const sideChart = `<div class="side-chart">
+      <div class="sc-head"><span class="sc-t">מפת סיכון–תשואה · 12 ח׳</span><span class="muted" style="font-size:11px">גודל = משקל</span></div>
+      ${bubbleChart(m, { W: 330, H: 238, tight: true })}
+      <div class="sc-lg muted">${liqLegend()}</div>
+    </div>`;
   const cols = oneCol
-    ? `<div class="holdings-cols one"><div>${head}${mgr.map(row).join('')}${totalRow}</div></div>`
+    ? `<div class="holdings-cols${onePage ? '' : ' one'}"><div>${head}${mgr.map(row).join('')}${totalRow}</div>${onePage ? sideChart : ''}</div>`
     : `<div class="holdings-cols"><div>${head}${mgr.slice(0, half).map((x, i) => row(x, i)).join('')}</div><div>${head}${mgr.slice(half).map((x, i) => row(x, i + half)).join('')}${totalRow}</div></div>`;
 
   // returns tables: both padded to the same number of rows so they are always the same height
@@ -94,7 +99,7 @@ export function renderPage1(m, assets) {
     <div>${returnsTable('נכסים בשקלים (ILS)', ils, m.returns.ILS, '', rows)}</div>
     <div>${returnsTable('נכסים בדולר (USD)', usd, m.returns.USD, '(סכומים מצוינים בשקלים)', rows)}</div>
   </div>
-  ${footer(1)}
+  ${onePage ? footer(1, `<p>${esc(m.disclaimer)}</p>`, 1) : footer(1)}
 </div>`;
 }
 
@@ -114,12 +119,15 @@ function returnsTable(title, rows, totals, note = '', padTo = 0) {
   </section>`;
 }
 
-function bubbleChart(m) {
+const liqLegend = () => ['locked', 'year', 'month'].map(k => `<span class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:${LIQUIDITY[k].color}"></span>${k === 'locked' ? 'נעול מעל שנה' : k === 'year' ? 'עד שנה' : 'נזיל עד חודש'}</span>`).join('');
+
+function bubbleChart(m, { W = 682, H = 330, dispW = W === 682 ? 580 : W, dispH = Math.round(H * dispW / W), tight = false } = {}) {
   const pts = m.managers.filter(x => x.r12 != null && x.std != null);
-  const W = 682, H = 330, L = 46, R = 668, T = 12, B = 290;
+  const L = 46, R = W - 14, T = 12, B = H - 40;
   const maxStd = Math.max(5, Math.ceil(Math.max(0, ...pts.map(p => p.std))));
-  const yMin = Math.min(-20, Math.floor(Math.min(0, ...pts.map(p => p.r12)) / 10) * 10);
-  const yMax = Math.max(40, Math.ceil(Math.max(0, ...pts.map(p => p.r12)) / 10) * 10);
+  // tight: axis fitted to the data (one-page layout); default keeps the fixed -20%..40% frame
+  const yMin = Math.min(tight ? -10 : -20, Math.floor(Math.min(0, ...pts.map(p => p.r12)) / 10) * 10);
+  const yMax = Math.max(tight ? 10 : 40, Math.ceil((Math.max(0, ...pts.map(p => p.r12)) + (tight ? 2 : 0)) / 10) * 10);
   const X = v => L + (v / maxStd) * (R - L), Y = v => B - ((v - yMin) / (yMax - yMin)) * (B - T);
   const maxW = Math.max(...m.managers.map(x => x.pct || 0), 1);
   const o = [];
@@ -137,7 +145,7 @@ function bubbleChart(m) {
   o.push(`<line x1="${L}" y1="${Y(0).toFixed(1)}" x2="${R}" y2="${Y(0).toFixed(1)}" stroke="#2A2B2D"></line>`);
   o.push(`<text x="${(L + R) / 2}" y="${H - 4}" text-anchor="middle" font-size="12" fill="#5E6064">סטיית תקן (סיכון)</text>`);
   o.push(`<text x="12" y="${(T + B) / 2}" text-anchor="middle" font-size="12" fill="#5E6064" transform="rotate(-90 12 ${(T + B) / 2})">תשואה 12 חודשים</text>`);
-  o.push(`<text x="${(X(1) - 6).toFixed(1)}" y="${T + 16}" text-anchor="end" font-size="12" fill="#8A6A1C">סיכון נמוך, תשואה חיובית</text>`);
+  if (X(1) - L > 150) o.push(`<text x="${(X(1) - 6).toFixed(1)}" y="${T + 16}" text-anchor="end" font-size="12" fill="#8A6A1C">סיכון נמוך, תשואה חיובית</text>`);
 
   const b = pts.map(p => ({ p, x: X(p.std), y: Y(p.r12), r: 6 + Math.sqrt((p.pct || 0) / maxW) * 14 }));
   for (const q of [...b].sort((a, c) => c.r - a.r)) {
@@ -160,7 +168,7 @@ function bubbleChart(m) {
     const halo = l.q.p.liquidity === "year" ? "#8A6A1C" : LQ.color;
     o.push(`<text x="${l.x.toFixed(1)}" y="${(l.y + 4.2).toFixed(1)}" text-anchor="middle" font-size="12" font-weight="700" fill="${LQ.text}" stroke="${halo}" stroke-width="2.5" paint-order="stroke">${l.q.p.n}</text>`);
   }
-  return `<svg width="580" height="281" viewBox="0 0 ${W} ${H}" role="img" aria-label="מפת סיכון-תשואה" style="display:block;direction:ltr;margin:0 auto">${o.join('')}</svg>`;
+  return `<svg width="${dispW}" height="${dispH}" viewBox="0 0 ${W} ${H}" role="img" aria-label="מפת סיכון-תשואה" style="display:block;direction:ltr;margin:0 auto">${o.join('')}</svg>`;
 }
 
 export function renderPage2(m, assets) {
@@ -171,7 +179,6 @@ export function renderPage2(m, assets) {
     const style = onChart && L ? `background:${L.color};color:${L.text};${x.liquidity === 'month' ? 'border:1px solid #9A9B9E;' : ''}` : 'background:#FFFFFF;color:#8E9093;border:1px solid #BDBEC1;';
     return `<span class="it"><span class="badge n" style="${style}">${x.n}</span><span class="nm">${esc(x.name)}${x.r12 == null ? ' <span style="color:#8E9093">(ללא תשואה)</span>' : ''}</span></span>`;
   }).join('');
-  const liqLegend = ['locked', 'year', 'month'].map(k => `<span class="legend-item"><span style="width:10px;height:10px;border-radius:50%;background:${LIQUIDITY[k].color}"></span>${k === 'locked' ? 'נעול מעל שנה' : k === 'year' ? 'עד שנה' : 'נזיל עד חודש'}</span>`).join('');
   return `<div class="fh-page p2" dir="rtl" lang="he">
   <div class="topline"></div>
   <header class="hdr">
@@ -179,7 +186,7 @@ export function renderPage2(m, assets) {
     <div style="display:flex;align-items:center;gap:12px"><span style="font-size:13px;color:#8A6A1C;font-weight:700">${placeholder(m.meta.clientName, 'שם הלקוח')} | ${N(dateDots(m.meta.reportDate))}</span><img class="logo" src="${assets.logoCircle}" alt="JP Group"></div>
   </header>
   <section class="sec" style="margin-top:22px;gap:8px">
-    <div class="sec-head ruled"><h2 class="big">מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center" class="muted">${liqLegend}<span>גודל = משקל · מספור כבעמוד 1</span></div></div>
+    <div class="sec-head ruled"><h2 class="big">מפת סיכון–תשואה · 12 חודשים</h2><div style="display:flex;gap:14px;font-size:12px;align-items:center" class="muted">${liqLegend()}<span>גודל = משקל · מספור כבעמוד 1</span></div></div>
     ${bubbleChart(m)}
     <div class="chart-legend">${legend}</div>
   </section>
