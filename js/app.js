@@ -4,7 +4,7 @@ import { extractReport } from './extract.js';
 import { buildModel, runChecks, fmt } from './model.js';
 import { renderReport } from './render.js';
 import { LIQUIDITY, CHANNELS } from './config.js';
-import { loadTable, saveEntry, asOverrides } from './store.js';
+import { loadTable, saveEntry, asOverrides, findSimilar } from './store.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL('../vendor/pdfjs/pdf.worker.min.mjs', import.meta.url).href;
 
@@ -35,6 +35,7 @@ async function handlePdf(file) {
     const local = loadOverrides(), shared = asOverrides(table), saved = {};
     for (const k of new Set([...Object.keys(local), ...Object.keys(shared)])) saved[k] = { channel: local[k]?.channel, liquidity: shared[k]?.liquidity };
     model = buildModel(raw, saved);
+    applySimilar();
     sourceName = file.name;
     if (!model.managers.length) throw new Error('לא זוהתה טבלת מנהלי השקעות. ייתכן שזה לא דוח תקופתי של JP Group.');
     showWorkspace();
@@ -79,7 +80,7 @@ function renderMapping() {
   const m = model;
   const liqOpts = v => `<option value="" ${!v ? 'selected' : ''}>— לבחירה —</option>` + Object.entries(LIQUIDITY).map(([k, o]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${o.label}</option>`).join('');
   const chOpts = v => Object.entries(CHANNELS).map(([k, o]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${o.short}</option>`).join('');
-  const mgrRows = m.managers.map((x, i) => `<tr class="${x.liquiditySource === 'default' || !x.liquidity ? 'flag' : ''}">
+  const mgrRows = m.managers.map((x, i) => `<tr class="${x.liquiditySource !== 'saved' ? 'flag' : ''}">
       <td class="ro n">${x.n}</td>
       <td class="ro name">${esc(x.name)}</td>
       <td><select data-path="managers.${i}.liquidity" aria-label="נזילות ${esc(x.name)}">${liqOpts(x.liquidity)}</select></td>
@@ -148,13 +149,34 @@ function renderMapping() {
   });
 }
 
+// Managers not found by exact name: take liquidity from a similarly named entry, flagged for confirmation.
+function applySimilar() {
+  for (const x of model.managers) {
+    if (x.liquiditySource !== 'missing') continue;
+    const hit = findSimilar(table, x.name);
+    if (hit) { x.liquidity = hit.liquidity; x.liquiditySource = 'similar'; x.similarTo = hit.name; }
+  }
+}
+
+// After editing the admin page in another tab, pick up the latest table when returning here.
+async function resyncTable() {
+  if (!model) return;
+  table = await loadTable();
+  let changed = false;
+  for (const x of model.managers) {
+    const e = table.entries[x.id];
+    if (e && (x.liquiditySource !== 'saved' || x.liquidity !== e.liquidity)) { x.liquidity = e.liquidity; x.liquiditySource = 'saved'; delete x.similarTo; changed = true; }
+  }
+  if (changed) refresh(true);
+}
+
 function newManagersBox() {
-  const fresh = model.managers.map((x, i) => ({ x, i })).filter(({ x }) => x.liquiditySource === 'missing');
+  const fresh = model.managers.map((x, i) => ({ x, i })).filter(({ x }) => x.liquiditySource === 'missing' || x.liquiditySource === 'similar');
   if (!fresh.length) return '';
   const liqOpts = v => `<option value="" ${!v ? 'selected' : ''}>— לבחירה —</option>` + Object.entries(LIQUIDITY).map(([k, o]) => `<option value="${k}" ${v === k ? 'selected' : ''}>${o.label}</option>`).join('');
   return `<div class="new-mgrs" role="alert"><strong>${fresh.length === 1 ? 'נמצא מנהל/ספק שאינו בטבלת הנזילות' : `נמצאו ${fresh.length} מנהלים/ספקים שאינם בטבלת הנזילות`}</strong>
     <span class="muted">בחירת סוג נזילות כאן מוסיפה אותם לטבלה${table.mode === 'shared' ? ' המשותפת' : ''} לכל הדוחות הבאים.</span>
-    ${fresh.map(({ x, i }) => `<div class="row"><span>${x.n}. ${esc(x.name)}</span><select data-path="managers.${i}.liquidity" aria-label="נזילות ${esc(x.name)}">${liqOpts(x.liquidity)}</select></div>`).join('')}
+    ${fresh.map(({ x, i }) => `<div class="row"><span>${x.n}. ${esc(x.name)}${x.similarTo ? ` <span class="muted">(הוצע לפי "${esc(x.similarTo)}" – בחירה או "אישור כל סיווגי הנזילות" שומרת בשם החדש)</span>` : ''}</span><select data-path="managers.${i}.liquidity" aria-label="נזילות ${esc(x.name)}">${liqOpts(x.liquidity)}</select></div>`).join('')}
   </div>`;
 }
 
@@ -181,7 +203,7 @@ function onEdit(e) {
     const x = model.managers[+mm[1]];
     if (mm[2] === 'channel') saveOverride(x.id, { channel: v });
     else if (v) {
-      const wasNew = x.liquiditySource === 'missing';
+      const wasNew = x.liquiditySource === 'missing' || x.liquiditySource === 'similar';
       saveEntry(table, x.name, v)
         .then(() => { x.liquiditySource = 'saved'; refresh(wasNew); })
         .catch(err => { alert(`השמירה לטבלת הנזילות נכשלה: ${err.message}\nהבחירה תחול על הדוח הנוכחי בלבד.`); x.liquiditySource = 'default'; refresh(true); });
@@ -227,6 +249,8 @@ $('#json-input').addEventListener('change', e => handleJson(e.target.files[0]));
 $('#export-pdf').addEventListener('click', exportPdf);
 $('#save-json').addEventListener('click', saveJson);
 $('#zoom').addEventListener('input', () => model && renderPreview());
+window.addEventListener('focus', () => { resyncTable().catch(() => {}); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) resyncTable().catch(() => {}); });
 $('#mapping').addEventListener('change', onEdit);
 const drop = $('#drop');
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });

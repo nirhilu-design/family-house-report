@@ -77,3 +77,15 @@ test('colour ramp: dark → gold → pale, text contrast flips', () => {
   assert.equal(textOn(ramp(0, 15)), '#FFFFFF');
   assert.equal(textOn(ramp(14, 15)), '#2A2B2D');
 });
+
+test('findSimilar: renamed manager inherits liquidity from a containing name; ambiguity returns null', async () => {
+  const { findSimilar } = await import('../js/store.js');
+  const table = { entries: { [key('קרן ב׳ הזדמנויות')]: { name: 'קרן ב׳ הזדמנויות', liquidity: 'locked' } } };
+  // provisional defaults also count: 'קרן אלפא הזדמנויות' → year
+  assert.equal(findSimilar(table, 'אלפא הזדמנויות')?.name, 'קרן אלפא הזדמנויות');
+  assert.equal(findSimilar(table, 'אלפא הזדמנויות').liquidity, 'year');
+  assert.equal(findSimilar(table, 'ב׳ הזדמנויות')?.liquidity, 'locked');
+  assert.equal(findSimilar(table, 'מנהל חדש לגמרי'), null);
+  // "הזדמנויות" alone matches two entries with different liquidity → no guess
+  assert.equal(findSimilar(table, 'הזדמנויות'), null);
+});

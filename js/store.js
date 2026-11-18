@@ -60,3 +60,18 @@ export function mergedRows(table) {
 export function asOverrides(table) {
   return Object.fromEntries(Object.entries(table.entries).map(([k, e]) => [k, { liquidity: e.liquidity }]));
 }
+
+/**
+ * For a manager not found by exact name: find a table entry (or provisional default) whose
+ * normalised name contains, or is contained in, this one (e.g. "אלפא הזדמנויות" ↔ "קרן אלפא הזדמנויות").
+ * Returns the single best candidate or null (ambiguous matches return null).
+ */
+export function findSimilar(table, name) {
+  const k = key(name);
+  if (k.length < 4) return null;
+  const hits = mergedRows(table).filter(r => r.key !== k && r.liquidity && r.key.length >= 4 && (r.key.includes(k) || k.includes(r.key)));
+  if (!hits.length) return null;
+  const liqs = new Set(hits.map(h => h.liquidity));
+  if (liqs.size > 1) return null; // conflicting candidates → let the user decide
+  return hits.sort((a, b) => Math.abs(a.key.length - k.length) - Math.abs(b.key.length - k.length))[0];
+}
