@@ -99,3 +99,11 @@ test('chooseLayout: ≤6 managers → one page; otherwise tables on page 1 if th
   assert.equal(chooseLayout(mk(15, 9)).mode, 'tables-p1'); // 8 + 9 rows fit on page 1
   assert.equal(chooseLayout(mk(16, 12)).mode, 'tables-p2');
 });
+
+test('firstNameFirst: PDF "surname first" → "first surname"', async () => {
+  const { firstNameFirst } = await import('../js/model.js');
+  assert.equal(firstNameFirst('כהן ישראל'), 'ישראל כהן');
+  assert.equal(firstNameFirst('בן דוד יוסי'), 'יוסי בן דוד');
+  assert.equal(firstNameFirst('כהן'), 'כהן');
+  assert.equal(firstNameFirst(null), '');
+});

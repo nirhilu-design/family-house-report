@@ -38,7 +38,7 @@ export function buildModel(raw, saved = {}) {
   const model = {
     version: 1,
     meta: {
-      clientName: raw.meta?.clientName || '', notes: '', signer: '',
+      clientName: firstNameFirst(raw.meta?.clientName), notes: '', signer: '',
       reportDate: raw.meta?.reportDate || '', producedAt: raw.meta?.producedAt || '',
       pageCount: raw.pageCount,
     },
@@ -61,6 +61,13 @@ export function buildModel(raw, saved = {}) {
   };
   model.checks = runChecks(model, raw);
   return model;
+}
+
+// The PDF lists the client as "surname first-name"; show first name first.
+// The last word is taken as the first name, so compound surnames ("בן דוד יוסי" → "יוסי בן דוד") stay together.
+export function firstNameFirst(name) {
+  const w = (name || '').trim().split(/\s+/).filter(Boolean);
+  return w.length < 2 ? w.join('') : [w[w.length - 1], ...w.slice(0, -1)].join(' ');
 }
 
 export function runChecks(m, raw = null) {
