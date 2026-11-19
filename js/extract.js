@@ -81,7 +81,7 @@ function classifyTitle(text) {
  */
 export async function extractRaw(doc) {
   const sections = {};
-  const meta = { reportDate: null, producedAt: null };
+  const meta = { reportDate: null, producedAt: null, clientName: null };
   let disclaimer = [];
   let inDisclaimer = false;
   let current = null;
@@ -92,14 +92,18 @@ export async function extractRaw(doc) {
     const { rows, items } = await pageRows(page);
     pages.push({ page, rows, items, n: p });
 
+    let prevText = null; // previous plain-text row on this page (client name sits right above the date line on page 1)
     for (const r of rows) {
       const t = r.text;
       if (t.startsWith('דו"ח תקופתי') || t.includes('פירוט תיק ההשקעות לתאריך')) {
+        if (!meta.clientName && prevText && !/\d/.test(prevText) && !classifyTitle(prevText) && prevText.length <= 60) meta.clientName = norm(prevText);
         const m = r.items.filter(i => i.dir === 'ltr').sort((a, b) => a.x - b.x).map(i => i.s).join('').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/)
           || t.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
         if (m && !meta.reportDate) meta.reportDate = `${m[1].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[3]}`;
+        prevText = null;
         continue;
       }
+      prevText = r.nums.length === 0 ? t : null;
       if (t.startsWith('מועד הפקת הדוח')) {
         const m = t.match(/(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2})/);
         if (m && !meta.producedAt) meta.producedAt = m[1];

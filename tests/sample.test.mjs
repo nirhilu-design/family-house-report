@@ -16,6 +16,7 @@ test('sample report extracts consistently', { skip: !file && 'set FH_SAMPLE_PDF 
   assert.deepEqual(errors, [], 'no consistency errors');
   assert.ok(m.managers.length > 0);
   assert.ok(m.meta.reportDate.match(/^\d{2}\/\d{2}\/\d{4}$/));
+  assert.ok(m.meta.clientName && !/\d/.test(m.meta.clientName), "client name read from page 1");
   const withRet = m.managers.filter(x => x.r12 != null);
   assert.ok(withRet.every(x => x.std != null), 'std extracted for every manager with a return');
   for (const s of m.stdInfo) assert.equal(s.markers, s.managers, `chart markers = managers on page ${s.page}`);

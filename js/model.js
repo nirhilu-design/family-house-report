@@ -38,7 +38,7 @@ export function buildModel(raw, saved = {}) {
   const model = {
     version: 1,
     meta: {
-      clientName: '', notes: '', signer: '',
+      clientName: raw.meta?.clientName || '', notes: '', signer: '',
       reportDate: raw.meta?.reportDate || '', producedAt: raw.meta?.producedAt || '',
       pageCount: raw.pageCount,
     },
