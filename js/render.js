@@ -19,7 +19,7 @@ function donut(title, segs, center, aria) {
     const a = `<circle cx="70" cy="70" r="54" stroke="${s.color}" stroke-dasharray="${len.toFixed(2)} ${C}" stroke-dashoffset="${(-off).toFixed(2)}"></circle>`;
     off += len; return a;
   }).join('');
-  const legend = segs.map(s => `<span class="legend-item"><span class="sw" style="background:${s.color}"></span>${esc(s.label)} ${N(pct(s.pct))}</span>`).join('');
+  const legend = segs.map(s => `<span class="legend-item"><span class="sw" style="background:${s.color}"></span>${esc(s.label)} ${N(pct(s.pct, 1))}</span>`).join('');
   return `<div class="donut"><span class="t">${title}</span>
     <svg width="100" height="100" viewBox="0 0 140 140" role="img" aria-label="${esc(aria)}">
       <g transform="rotate(-90 70 70)" fill="none" stroke-width="13">${arcs}</g>
@@ -91,7 +91,7 @@ export function renderPage1(m, assets, layout = chooseLayout(m)) {
   }).join('');
   const oneCol = n <= 8;
   const half = oneCol ? n : Math.ceil(n / 2);
-  const row = (x, i) => `<div class="hrow"><span class="sq" style="background:${ramp(i, n)}"></span><span class="name"><span class="num n">${x.n}</span><span>${esc(x.name)}</span></span><span class="r n" style="font-weight:700">${pct(x.pct)}</span><span class="r n muted">${fmt(x.value)}</span></div>`;
+  const row = (x, i) => `<div class="hrow"><span class="sq" style="background:${ramp(i, n)}"></span><span class="name"><span class="num n">${x.n}</span><span>${esc(x.name)}</span></span><span class="r n" style="font-weight:700">${pct(x.pct, 1)}</span><span class="r n muted">${fmt(x.value)}</span></div>`;
   const head = `<div class="hrow head"><span></span><span>מנהל השקעות</span><span class="r">משקל</span><span class="r">שווי (₪)</span></div>`;
   const totalRow = `<div class="htotal"><span class="l">סה״כ תיק <span class="n muted">100%</span></span><span class="v n">${fmt(m.total)} ₪</span></div>`;
   const cols = oneCol

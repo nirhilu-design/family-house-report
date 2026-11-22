@@ -13,6 +13,7 @@ Flow: upload → automatic extraction → consistency checks → mapping review 
 - Old-money private-bank statement: restraint, one right-aligned axis, numbers carry the page.
 - Total value is prominent by position: 24px bold in the total row of the managers table (version B; the summary band was removed). A big centred number was rejected.
 - Every length/area in a chart equals a share of the portfolio. No decorative/arbitrary bars. No additional chart types.
+- **All percentages everywhere: one decimal** (bar labels, donut centres and legends, managers table, returns tables). Bar widths keep full precision.
 - **Single typeface:** Calibri everywhere (`Calibri, Carlito, Assistant, 'Segoe UI', Arial, sans-serif`). Serif was tried and rejected.
 
 ### Colour standard
@@ -30,7 +31,7 @@ A colour key line under the donuts states both rules.
 1. Header: "לקוח:" + client name (26px) + "דוח ריכוז השקעות ומנהלים"; logo with swoosh on the left. No summary band.
 2. "התפלגות מנהלי השקעות": one full-width 28px bar of all managers (sorted desc, ramp colours) + numbered holdings table: swatch · **number** · name · weight · value ₪. **Up to 8 managers → one column**, otherwise two columns. Total row: "סה״כ תיק 100%" + total value 24px bold.
 3. Panel (`#FAFAF9`) with three 100px donuts: currency, geography, asset allocation (4 classes, darker = larger, centre = largest class) + one-line colour key. Liquidity is NOT on page 1.
-4. Two returns tables (ILS / USD) side by side: **manager number** (same as the managers table and the chart bubbles) + manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table; USD title note "(סכומים מצוינים בשקלים)") · YTD · 12M · 24M (cumulative). Names stay on one line. All percentages one decimal. Sorted by 12M desc, totals from the PDF. **Both tables always the same height**: the shorter one is padded with blank rows so the total rows line up.
+4. Two returns tables (ILS / USD) side by side: **manager number** (same as the managers table and the chart bubbles) + manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table; USD title note "(סכומים מצוינים בשקלים)") · YTD · 12M · 24M (cumulative). Names stay on one line. Sorted by 12M desc, totals from the PDF. **Both tables always the same height**: the shorter one is padded with blank rows so the total rows line up.
 
 ### Page 2 – תשואות וסיכון
 1. Header: title, subtitle, client | date, round logo.
