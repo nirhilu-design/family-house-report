@@ -11,7 +11,7 @@ Flow: upload → automatic extraction → consistency checks → mapping review 
 
 ### Principles
 - Old-money private-bank statement: restraint, one right-aligned axis, numbers carry the page.
-- Total value is prominent by position: 24px bold in the total row of the managers table (version B; the summary band was removed). A big centred number was rejected.
+- Total value leads page 1 in the hero: 34px regular weight with a small grey ₪, behind a 3px gold rule, right-aligned. A big centred or bold number was rejected (restraint reads as private banking).
 - Every length/area in a chart equals a share of the portfolio. No decorative/arbitrary bars. No additional chart types.
 - **All percentages everywhere: one decimal** (bar labels, donut centres and legends, managers table, returns tables). Bar widths keep full precision.
 - **Single typeface:** Calibri everywhere (`Calibri, Carlito, Assistant, 'Segoe UI', Arial, sans-serif`). Serif was tried and rejected.
@@ -27,21 +27,21 @@ Flow: upload → automatic extraction → consistency checks → mapping review 
 
 A colour key line under the donuts states both rules.
 
-### Page 1 – סקירת תיק (version B, branch `version-b`)
-1. Header: "לקוח:" + client name (26px) + "דוח ריכוז השקעות ומנהלים"; logo with swoosh on the left. No summary band.
-2. "התפלגות מנהלי השקעות": one full-width 28px bar of all managers (sorted desc, ramp colours) + numbered holdings table: swatch · **number** · name · weight · value ₪. **Up to 8 managers → one column**, otherwise two columns. Total row: "סה״כ תיק 100%" + total value 24px bold.
-3. Panel (`#FAFAF9`) with three 100px donuts: currency, geography, asset allocation (4 classes, darker = larger, centre = largest class) + one-line colour key. Liquidity is NOT on page 1.
-4. Two returns tables (ILS / USD) side by side: **manager number** (same as the managers table and the chart bubbles) + manager · value in ₪ (full amount, exactly as in the PDF – no currency conversion, also in the USD table; USD title note "(סכומים מצוינים בשקלים)") · YTD · 12M · 24M (cumulative). Names stay on one line. Sorted by 12M desc, totals from the PDF. **Both tables always the same height**: the shorter one is padded with blank rows so the total rows line up.
+### Page 1 – סקירת תיק (version B, on `main`; version A kept on branch `version-a`)
+Sections in reading order (general → specific), separated by 18px and a uniform section head (19px title, small grey subtitle, 1px ink rule):
+1. Header: "לקוח:" + client name (26px) + "דוח ריכוז השקעות ומנהלים"; logo with swoosh on the left.
+2. Hero: "שווי התיק המנוהל" (gold caps) · total value · "נכון ליום dd.mm.yyyy · N מנהלי השקעות"; next to it, after a hairline, a fixed intro sentence inviting the client to read the page (allocation, managers, returns incl. risk/return).
+3. "פיזור התיק" (subtitle = colour key "darker = larger"): panel `#FAFAF9` with four 72px donuts in one row, legend under each: investment channel ("סה"כ תיק השקעות" in the PDF – titled "לפי ערוץ השקעה", centre = largest, "אלטרנטיב"), currency, geography, asset allocation. No separate key line.
+4. "התפלגות מנהלי השקעות": 20px graded bar + numbered holdings table (swatch · number · name · weight · value ₪). **Up to 8 managers → one column**, otherwise two. Total row "סה״כ תיק 100%" + total at normal size (the headline number is in the hero).
+5. "תשואות לפי מנהל": two tables (ILS / USD) side by side: **manager number** + name · value · "מתחילת שנה" (two-line header) · 12M · 24M (cumulative), one decimal, names on one line. Sorted by 12M desc, totals from the PDF. **Both tables always the same height** (blank padding rows). **USD table in dollars** when the month-end rate is entered on the upload page: value ÷ rate, header "שווי $", note "(לפי שער יציג X)"; without a rate it shows ₪ with "(סכומים מצוינים בשקלים)" and a check warns.
 
 ### Page 2 – תשואות וסיכון
 1. Header: title, subtitle, client | date, round logo.
-2. Risk/return bubble chart (drawn at 580×281, viewBox 682×330, centred): x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from the page 1 table**; legend in 4 columns below (advisory portfolio shown as "(ללא תשואה)").
-3. Manager notes box with signature line, under the chart legend.
-
-**Automatic layout** (`chooseLayout()` in `js/render.js`, deterministic from row counts, 24px per table row):
-- **≤ 6 managers → one page**: same page 1 top; full-width chart (150px, tight axis; shortened by 24px per extra row, min 110) under the returns tables; no notes; disclaimer in the footer; "עמוד 1 מתוך 1". If even that does not fit, falls back to two pages.
-- **> 6 managers → two pages**: returns tables stay on page 1 while holdings rows + returns rows ≤ 17; otherwise they move to the top of page 2 (notes under the USD table, chart shrunk to fit).
+2. Risk/return bubble chart, full width 682×290: x = std-dev (%), y = 12M return; bubble area ∝ weight; **colour = liquidity**; **number inside = the manager's number from page 1**; numbered legend in 4 columns below (advisory portfolio "(ללא תשואה)"). No key line next to the title (removed on request).
+3. Manager notes box with signature line.
 4. Footer: original PDF disclaimer (+ "בתודה, JP Group"), confidential line, page number.
+
+**Automatic layout** (`chooseLayout()` in `js/render.js`, deterministic from row counts, ~22.7px per row): returns tables stay on page 1 while holding rows (incl. total) + returns rows ≤ 17; otherwise they move to the top of page 2 (notes under the USD table, chart shortened to fit). The one-page layout for ≤ 6 managers is **off** (`ONE_PAGE_ENABLED`): with the version B page 1 it overflows by ~90px even with 6 managers. Option on the table: for ≤ 8 managers merge the holdings and returns tables into one, which frees room for a ~210–250px chart.
 
 ## 3. Data mapping – source PDF → report
 Sections are located by **title text**, not page numbers (`TITLES` in `js/extract.js`).
@@ -63,6 +63,8 @@ Sections are located by **title text**, not page numbers (`TITLES` in `js/extrac
 | Disclaimer | text starting "חשוב לציין" | until "בתודה / JP Group" | |
 | Liquidity | **not in PDF** | — | shared liquidity table (Cloudflare KV, `admin.html`); provisional defaults in `js/config.js` until confirmed; a manager missing from both is flagged and its choice is saved to the table |
 | Client name | page 1: the text line right above "פירוט תיק ההשקעות לתאריך …" (no digits, ≤ 60 chars), PDF order "surname first" flipped to first name first (last word moved to the front) | — | editable in the mapping panel |
+| Investment channel donut | "סה"כ תיק השקעות" (page 2) | label · % | |
+| USD rate | **not in PDF** – month-end representative rate entered on the upload page | — | USD table value = ₪ ÷ rate |
 | Notes, signer | **not in PDF** | — | manual |
 
 Not used: asset-class detail (מבנה תיק השקעות כולל), per-manager structure/geography/currency pages, monthly returns.

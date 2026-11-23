@@ -90,14 +90,23 @@ test('findSimilar: renamed manager inherits liquidity from a containing name; am
   assert.equal(findSimilar(table, 'הזדמנויות'), null);
 });
 
-test('chooseLayout: ≤6 managers → one page; otherwise tables on page 1 if they fit, else page 2', async () => {
+test('chooseLayout: tables on page 1 while they fit, else on page 2 (one-page layout off in version B)', async () => {
   const { chooseLayout } = await import('../js/render.js');
   const mk = (n, ils) => ({ managers: Array.from({ length: n }, (_, i) => ({ n: i + 1, currency: i < ils ? 'ILS' : 'USD', r12: 1 })) });
-  assert.equal(chooseLayout(mk(6, 3)).mode, 'one');
-  assert.equal(chooseLayout(mk(6, 4)).chartH, 126);       // one extra row → shorter chart, still one page
-  assert.equal(chooseLayout(mk(6, 6)).mode, 'tables-p1'); // one-page would not fit → two pages
-  assert.equal(chooseLayout(mk(15, 9)).mode, 'tables-p1'); // 8 + 9 rows fit on page 1
-  assert.equal(chooseLayout(mk(16, 12)).mode, 'tables-p2');
+  assert.equal(chooseLayout(mk(6, 3)).mode, 'tables-p1');
+  assert.equal(chooseLayout(mk(15, 9)).mode, 'tables-p1');  // 8 + 9 rows (the real 15-manager report)
+  assert.equal(chooseLayout(mk(16, 8)).mode, 'tables-p1');
+  const l = chooseLayout(mk(16, 12));
+  assert.equal(l.mode, 'tables-p2');
+  assert.ok(l.p2ChartH >= 200 && l.p2ChartH < 290);
+});
+
+test('USD rate: dollars in the USD table only when a rate is entered', async () => {
+  const { usdRate } = await import('../js/render.js');
+  assert.equal(usdRate({ meta: { usdRate: 3.647 } }), 3.647);
+  assert.equal(usdRate({ meta: { usdRate: null } }), null);
+  assert.equal(usdRate({ meta: { usdRate: 0 } }), null);
+  assert.equal(usdRate({ meta: {} }), null);
 });
 
 test('firstNameFirst: PDF "surname first" → "first surname"', async () => {

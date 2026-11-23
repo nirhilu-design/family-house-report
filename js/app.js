@@ -106,10 +106,12 @@ function renderMapping() {
       <label class="field">תאריך הדוח ${src(1)}<input data-path="meta.reportDate" value="${esc(m.meta.reportDate)}" class="n"></label>
       <label class="field">שם מנהל ההשקעות (חתימה)<input data-path="meta.signer" value="${esc(m.meta.signer)}"></label>
       <label class="field">מועד הפקת דוח המקור ${src(m.meta.pageCount)}<input value="${esc(m.meta.producedAt)}" readonly></label>
+      <label class="field">שער דולר יציג לסוף החודש (₪ ל-$1)<input class="num" data-path="meta.usdRate" value="${m.meta.usdRate ?? ''}" inputmode="decimal" placeholder="למשל 3.647" aria-describedby="usd-rate-hint"></label>
     </div>
+    <p class="hint" id="usd-rate-hint">בדוח המקור כל הסכומים בשקלים. עם השער, טבלת "נכסים בדולר" מציגה את השווי בדולרים (שווי בש״ח ÷ שער). בלי שער היא מציגה שקלים.</p>
     <label class="field" style="margin-top:10px">הערות מנהל ההשקעות (עמוד 2)<textarea data-path="meta.notes" placeholder="סקירת התקופה, הסבר לחריגות…">${esc(m.meta.notes)}</textarea></label>
 
-    <h2>שורת הסיכום – עמוד 1</h2>
+    <h2>סכומים ותשואות כוללות</h2>
     <div class="tbl-wrap"><table class="map"><thead><tr><th>שדה בדוח</th><th>ערך</th><th>מקור</th></tr></thead><tbody>
       <tr><td>שווי תיק כולל (₪)</td><td>${numInput('total', m.total, 0)}</td><td>${src(m.managersPage)} התפלגות לפי מנהלי השקעות · סה"כ</td></tr>
       <tr><td>תשואה 12 ח׳ – אפיקים שקליים</td><td>${numInput('returns.ILS.total12', m.returns.ILS?.total12)}</td><td>${src(m.returns.ILS?.page)} תשואות השקעות בש"ח · סה"כ</td></tr>

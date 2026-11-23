@@ -38,7 +38,7 @@ export function buildModel(raw, saved = {}) {
   const model = {
     version: 1,
     meta: {
-      clientName: firstNameFirst(raw.meta?.clientName), notes: '', signer: '',
+      clientName: firstNameFirst(raw.meta?.clientName), notes: '', signer: '', usdRate: null,
       reportDate: raw.meta?.reportDate || '', producedAt: raw.meta?.producedAt || '',
       pageCount: raw.pageCount,
     },
@@ -116,6 +116,12 @@ export function runChecks(m, raw = null) {
   const defLiq = m.managers.filter(x => x.liquiditySource === 'default');
   if (defLiq.length) add('warn', `סיווג נזילות זמני (ברירת מחדל, לאישור) עבור ${defLiq.length} מנהלים`);
   if (!m.meta.clientName) add('warn', 'לא הוזן שם לקוח');
+  const rate = Number(m.meta.usdRate);
+  if (m.managers.some(x => x.currency === 'USD')) {
+    if (!(rate > 0)) add('warn', 'לא הוזן שער דולר יציג – טבלת הנכסים בדולר תוצג בשקלים');
+    else if (rate < 2 || rate > 6) add('warn', `שער הדולר ${rate} נראה חריג – יש לבדוק`);
+    else add('ok', `טבלת הנכסים בדולר מוצגת בדולרים לפי שער ${rate}`);
+  }
   if (m.managers.length > 16) add('warn', `${m.managers.length} מנהלים — טבלת האחזקות עלולה לא להיכנס בעמוד 1`);
   return out;
 }
