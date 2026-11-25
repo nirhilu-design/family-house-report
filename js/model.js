@@ -104,6 +104,18 @@ export function runChecks(m, raw = null) {
   for (const cur of ['ILS', 'USD']) if (!m.returns[cur]) add('warn', `לא נמצאה טבלת תשואות ${cur === 'ILS' ? 'בש"ח' : 'במט"ח'}`);
   const noRet = m.managers.filter(x => x.r12 == null);
   if (noRet.length) add('info', `ללא תשואה מדווחת: ${noRet.map(x => x.name).join(', ')}`);
+  // YTD ("מתחילת שנה") comes from the first % column of the PDF returns tables. In a December report it must equal
+  // the 12-month return, which also guards the column order.
+  const withRet = m.managers.filter(x => x.r12 != null);
+  const noYtd = withRet.filter(x => x.ytd == null);
+  if (withRet.length && noYtd.length === withRet.length) add('warn', 'לא נמצאה עמודת "מתחילת שנה" בטבלאות התשואות – העמודה תוצג ריקה');
+  else if (noYtd.length) add('warn', `חסרה תשואה מתחילת שנה עבור: ${noYtd.map(x => x.name).join(', ')}`);
+  else if (withRet.length) {
+    const dec = /^\d{2}\/12\/\d{4}$/.test(m.meta.reportDate || '');
+    const off = dec ? withRet.filter(x => Math.abs(x.ytd - x.r12) > 0.05) : [];
+    if (off.length) add('warn', `דוח לסוף דצמבר אבל תשואה מתחילת שנה שונה מ-12 ח׳ עבור: ${off.map(x => x.name).join(', ')} – לבדוק את סדר העמודות`);
+    else add('ok', `תשואה מתחילת שנה נקראה מהדוח עבור ${withRet.length} מנהלים`);
+  }
   const noStd = m.managers.filter(x => x.r12 != null && x.std == null);
   if (noStd.length) add('warn', `לא חולצה סטיית תקן מהגרף עבור: ${noStd.map(x => x.name).join(', ')} — ניתן להזין ידנית`);
   else if (m.managers.some(x => x.std != null)) add('ok', 'סטיית התקן חולצה מגרפי היעילות לכל המנהלים עם תשואה');

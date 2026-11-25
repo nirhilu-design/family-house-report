@@ -64,6 +64,7 @@ Sections are located by **title text**, not page numbers (`TITLES` in `js/extrac
 | Liquidity | **not in PDF** | — | shared liquidity table (Cloudflare KV, `admin.html`); provisional defaults in `js/config.js` until confirmed; a manager missing from both is flagged and its choice is saved to the table |
 | Client name | page 1: the text line right above "פירוט תיק ההשקעות לתאריך …" (no digits, ≤ 60 chars), PDF order "surname first" flipped to first name first (last word moved to the front) | — | editable in the mapping panel |
 | Investment channel donut | "סה"כ תיק השקעות" (page 2) | label · % | |
+| Returns: YTD / 12M / 24M | "תשואות השקעות בש"ח" / "במט"ח" | the three % columns in order (YTD first); total row = "סה"כ" | YTD shown as "מתחילת שנה", editable in the mapping panel; check: in a December report YTD must equal 12M (guards the column order) |
 | USD rate | **not in PDF** – month-end representative rate entered on the upload page | — | USD table value = ₪ ÷ rate |
 | Notes, signer | **not in PDF** | — | manual |
 

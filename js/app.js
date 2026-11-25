@@ -88,6 +88,7 @@ function renderMapping() {
       <td>${numInput(`managers.${i}.pct`, x.pct, 2, `משקל ${x.name}`)}</td>
       <td>${numInput(`managers.${i}.value`, x.value, 0, `שווי ${x.name}`)}</td>
       <td class="ro">${x.currency || '—'}</td>
+      <td>${numInput(`managers.${i}.ytd`, x.ytd, 2, `תשואה מתחילת שנה ${x.name}`)}</td>
       <td>${numInput(`managers.${i}.r12`, x.r12, 2, `תשואה 12 ח׳ ${x.name}`)}</td>
       <td>${numInput(`managers.${i}.r24`, x.r24, 2, `תשואה 24 ח׳ ${x.name}`)}</td>
       <td>${numInput(`managers.${i}.std`, x.std, 2, `סטיית תקן ${x.name}`)}</td>
@@ -114,8 +115,10 @@ function renderMapping() {
     <h2>סכומים ותשואות כוללות</h2>
     <div class="tbl-wrap"><table class="map"><thead><tr><th>שדה בדוח</th><th>ערך</th><th>מקור</th></tr></thead><tbody>
       <tr><td>שווי תיק כולל (₪)</td><td>${numInput('total', m.total, 0)}</td><td>${src(m.managersPage)} התפלגות לפי מנהלי השקעות · סה"כ</td></tr>
+      <tr><td>תשואה מתחילת שנה – אפיקים שקליים</td><td>${numInput('returns.ILS.totalYtd', m.returns.ILS?.totalYtd)}</td><td>${src(m.returns.ILS?.page)} תשואות השקעות בש"ח · סה"כ</td></tr>
       <tr><td>תשואה 12 ח׳ – אפיקים שקליים</td><td>${numInput('returns.ILS.total12', m.returns.ILS?.total12)}</td><td>${src(m.returns.ILS?.page)} תשואות השקעות בש"ח · סה"כ</td></tr>
       <tr><td>תשואה 24 ח׳ – אפיקים שקליים</td><td>${numInput('returns.ILS.total24', m.returns.ILS?.total24)}</td><td>${src(m.returns.ILS?.page)}</td></tr>
+      <tr><td>תשואה מתחילת שנה – אפיקים דולריים</td><td>${numInput('returns.USD.totalYtd', m.returns.USD?.totalYtd)}</td><td>${src(m.returns.USD?.page)} תשואות השקעות במט"ח · סה"כ</td></tr>
       <tr><td>תשואה 12 ח׳ – אפיקים דולריים</td><td>${numInput('returns.USD.total12', m.returns.USD?.total12)}</td><td>${src(m.returns.USD?.page)} תשואות השקעות במט"ח · סה"כ</td></tr>
       <tr><td>תשואה 24 ח׳ – אפיקים דולריים</td><td>${numInput('returns.USD.total24', m.returns.USD?.total24)}</td><td>${src(m.returns.USD?.page)}</td></tr>
       <tr><td>חשיפה למט״ח (%)</td><td>${numInput('fx.pct', m.fx?.pct)}</td><td>${src(m.fx?.page)} חשיפה למטבעות · מט"ח</td></tr>
@@ -124,7 +127,7 @@ function renderMapping() {
 
     ${newManagersBox()}
     <h2>מנהלי השקעות <small>${src(m.managersPage)} משקלים · תשואות מעמודי התשואות · סטיית תקן מגרפי היעילות</small></h2>
-    <div class="tbl-wrap"><table class="map wide"><thead><tr><th>#</th><th>מנהל</th><th>נזילות</th><th>ערוץ</th><th>משקל %</th><th>שווי ₪</th><th>מטבע</th><th>12 ח׳ %</th><th>24 ח׳ %</th><th>סט״ת %</th></tr></thead><tbody>${mgrRows}</tbody></table></div>
+    <div class="tbl-wrap"><table class="map wide"><thead><tr><th>#</th><th>מנהל</th><th>נזילות</th><th>ערוץ</th><th>משקל %</th><th>שווי ₪</th><th>מטבע</th><th>מתחילת שנה %</th><th>12 ח׳ %</th><th>24 ח׳ %</th><th>סט״ת %</th></tr></thead><tbody>${mgrRows}</tbody></table></div>
     <p class="hint">שורות מסומנות = סיווג נזילות זמני (ברירת מחדל) או חסר. הנזילות לא מופיעה בדוח המקור; כל בחירה נשמרת ב<a href="admin.html" target="_blank">טבלת הנזילות</a>${table.mode === 'shared' ? ' המשותפת' : ' (מקומית בדפדפן זה)'} ותופעל אוטומטית בכל הדוחות הבאים. הערוץ נגזר מעמוד "מבנה תיק מנוהל – ניהול תיקים"${model.channelsPage ? ` ונבדק מול עמוד ${model.channelsPage}` : ''}.</p>
     <div class="row-actions"><button class="btn" id="confirm-liq">אישור כל סיווגי הנזילות כפי שהם</button></div>
 

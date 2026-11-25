@@ -116,3 +116,20 @@ test('firstNameFirst: PDF "surname first" → "first surname"', async () => {
   assert.equal(firstNameFirst('כהן'), 'כהן');
   assert.equal(firstNameFirst(null), '');
 });
+
+test('YTD: taken from the PDF returns tables into managers and totals, checked against 12M in December', () => {
+  const raw = {
+    meta: { reportDate: '31/12/2024' }, pageCount: 16,
+    managers: { page: 3, total: { value: 300 }, rows: [{ label: 'מנהל א', value: 200, pct: 66.67, page: 3 }, { label: 'קרן ב', value: 100, pct: 33.33, page: 3 }] },
+    retILS: parseReturns({ page: 13, rows: [row('מנהל א', '5.00%', '5.00%', '9.00%'), row('סה"כ', '5.00%', '5.00%', '9.00%')] }),
+    retUSD: parseReturns({ page: 14, rows: [row('קרן ב', '7.10%', '7.10%', '12.00%'), row('סה"כ', '7.10%', '7.10%', '12.00%')] }),
+  };
+  const m = buildModel(raw, {});
+  assert.deepEqual(m.managers.map(x => [x.name, x.ytd, x.r12]), [['מנהל א', 5, 5], ['קרן ב', 7.1, 7.1]]);
+  assert.equal(m.returns.ILS.totalYtd, 5);
+  assert.equal(m.returns.USD.totalYtd, 7.1);
+  assert.ok(m.checks.some(c => c.level === 'ok' && c.text.startsWith('תשואה מתחילת שנה נקראה')));
+  // a December report whose YTD differs from 12M means the columns were misread
+  raw.retILS = parseReturns({ page: 13, rows: [row('מנהל א', '3.00%', '5.00%', '9.00%')] });
+  assert.ok(buildModel(raw, {}).checks.some(c => c.level === 'warn' && c.text.includes('סדר העמודות')));
+});
