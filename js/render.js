@@ -47,6 +47,31 @@ const returnRows = m => {
 };
 // rows in the holdings table incl. its total row: one column up to 8 managers, else the taller of two columns
 const holdRows = n => (n <= 8 ? n + 1 : Math.floor(n / 2) + 1);
+// ---------- filling page 1 (small portfolios) ----------
+// With few managers page 1 ends well above the footer. Instead of leaving a white band at the bottom,
+// the spare height is spread over the page: larger donuts first, then wider gaps between sections,
+// then roomier table rows. Deterministic, from the same row-count estimate as the layout choice.
+const P1_LIMIT = 1056; // keep ~10px clear of the footer (1067)
+export function p1Bottom(m, mode) {
+  const n = m.managers.length;
+  return mode === 'tables-p2' ? 676 + ROW_H * (holdRows(n) - 9) : 898 + ROW_H * (holdRows(n) + returnRows(m) - 10);
+}
+export function p1Fill(m, layout) {
+  if (layout.mode === 'one') return null;
+  const budget = P1_LIMIT - p1Bottom(m, layout.mode) - 6;
+  if (budget < 12) return null;
+  const n = m.managers.length, p2 = layout.mode === 'tables-p2';
+  const rowsN = (n <= 8 ? n : Math.floor(n / 2) + 1) + (p2 ? 0 : returnRows(m)); // padded rows in the tallest columns
+  const G = p2 ? 3 : 4, I = p2 ? 3 : 4;                                          // section gaps, inner gaps
+  const cost = ({ d, g, p }) => d + G * g + I * Math.floor(g / 4) + 2 * p * rowsN;
+  let f = { d: 0, g: 0, p: 0 }, left = budget;
+  f.d = Math.min(36, Math.floor(left / 3)); left = budget - cost(f);           // 1. larger donuts
+  f.g = Math.min(14, Math.floor(left / (G + I / 4) / 2)); left = budget - cost(f); // 2. wider section gaps
+  while (f.p < 4 && cost({ ...f, p: f.p + 0.5 }) <= budget * 0.85) f.p += 0.5;  // 3. roomier rows
+  while (f.g < 30 && cost({ ...f, g: f.g + 1 }) <= budget) f.g += 1;           // 4. the rest to the gaps
+  return { donut: 72 + f.d, gap: 18 + f.g, igap: 8 + Math.floor(f.g / 4), hpad: 2 + f.p, rpad: 3 + f.p, used: cost(f) };
+}
+
 export function chooseLayout(m) {
   const n = m.managers.length, rows = holdRows(n) + returnRows(m);
   if (ONE_PAGE_ENABLED && n <= 6) {
@@ -125,7 +150,9 @@ export function renderPage1(m, assets, layout = chooseLayout(m)) {
     : `<div class="holdings-cols"><div>${head}${mgr.slice(0, half).map((x, i) => row(x, i)).join('')}</div><div>${head}${mgr.slice(half).map((x, i) => row(x, i + half)).join('')}${totalRow}</div></div>`;
 
 
-  return `<div class="fh-page p1${onePage ? ' one-page' : ''}" dir="rtl" lang="he">
+  const fill = p1Fill(m, layout);
+  const fillStyle = fill ? ` style="--donut:${fill.donut}px;--gap:${fill.gap}px;--igap:${fill.igap}px;--hpad:${fill.hpad}px;--rpad:${fill.rpad}px"` : '';
+  return `<div class="fh-page p1${onePage ? ' one-page' : ''}"${fillStyle} dir="rtl" lang="he">
   <div class="topline"></div>
   <header class="hdr">
     <div style="display:flex;flex-direction:column;gap:3px">

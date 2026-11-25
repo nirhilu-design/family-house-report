@@ -43,6 +43,8 @@ Sections in reading order (general → specific), separated by 18px and a unifor
 
 **Automatic layout** (`chooseLayout()` in `js/render.js`, deterministic from row counts, ~22.7px per row): returns tables stay on page 1 while holding rows (incl. total) + returns rows ≤ 17; otherwise they move to the top of page 2 (notes under the USD table, chart shortened to fit). The one-page layout for ≤ 6 managers is **off** (`ONE_PAGE_ENABLED`): with the version B page 1 it overflows by ~90px even with 6 managers. Option on the table: for ≤ 8 managers merge the holdings and returns tables into one, which frees room for a ~210–250px chart.
 
+**Filling page 1** (`p1Fill()` in `js/render.js`): when page 1 ends well above the footer (typically ≤ 8 managers), the spare height is spread instead of leaving a white band: donuts grow first (72 → up to 108px), then the gaps between sections (18 → up to 48px, inner gaps a little), then table row padding. Same deterministic row-count estimate; the page ends ~10–25px above the footer for 3–15 managers. Implemented with CSS variables `--donut`, `--gap`, `--igap`, `--hpad`, `--rpad` on `.fh-page.p1`.
+
 ## 3. Data mapping – source PDF → report
 Sections are located by **title text**, not page numbers (`TITLES` in `js/extract.js`).
 

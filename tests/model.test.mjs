@@ -133,3 +133,12 @@ test('YTD: taken from the PDF returns tables into managers and totals, checked a
   raw.retILS = parseReturns({ page: 13, rows: [row('מנהל א', '3.00%', '5.00%', '9.00%')] });
   assert.ok(buildModel(raw, {}).checks.some(c => c.level === 'warn' && c.text.includes('סדר העמודות')));
 });
+
+test('p1Fill: small portfolios spread the spare height; a full page is left as is', async () => {
+  const { chooseLayout, p1Fill } = await import('../js/render.js');
+  const mk = (n, ils) => ({ managers: Array.from({ length: n }, (_, i) => ({ n: i + 1, currency: i < ils ? 'ILS' : 'USD', r12: 1 })) });
+  const small = mk(6, 3), f = p1Fill(small, chooseLayout(small));
+  assert.ok(f.donut > 72 && f.gap > 18, 'larger donuts and gaps');
+  const full = mk(15, 9);
+  assert.equal(p1Fill(full, chooseLayout(full)), null);
+});
