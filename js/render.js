@@ -153,7 +153,7 @@ export function renderPage1(m, assets, layout = chooseLayout(m)) {
     ${cols}
   </section>
   ${layout.mode === 'tables-p2' ? '' : `<section class="sec">
-    ${secHead('תשואות לפי מנהל', 'תשואה נומינלית במטבע המדידה · 24 ח׳ מצטבר')}
+    ${secHead('תשואות לפי מנהל', '')}
     ${returnsBlock(m)}
   </section>`}
   ${onePage ? `<section class="sec wide-chart">
