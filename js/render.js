@@ -148,7 +148,7 @@ export function renderPage1(m, assets, layout = chooseLayout(m)) {
     <div class="panel" style="grid-template-columns:repeat(${donuts.length}, minmax(0, 1fr))">${donuts.join('')}</div>
   </section>
   <section class="sec">
-    ${secHead('התפלגות מנהלי השקעות', `${n} מנהלים · מהגדול לקטן`)}
+    ${secHead('התפלגות מנהלי השקעות', '')}
     <div class="stack" style="height:20px;width:100%" role="img" aria-label="פס אחזקות לפי משקל בתיק">${bar}</div>
     ${cols}
   </section>
