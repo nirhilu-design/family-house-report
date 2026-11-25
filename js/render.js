@@ -144,7 +144,7 @@ export function renderPage1(m, assets, layout = chooseLayout(m)) {
     <p>${INTRO}</p>
   </section>
   <section class="sec">
-    ${secHead('פיזור התיק', 'בכל התפלגות – גוון כהה יותר = נתח גדול יותר')}
+    ${secHead('פיזור התיק', '')}
     <div class="panel" style="grid-template-columns:repeat(${donuts.length}, minmax(0, 1fr))">${donuts.join('')}</div>
   </section>
   <section class="sec">
